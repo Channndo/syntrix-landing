@@ -822,6 +822,11 @@
       <a href="#checks">Checks</a>
       <a href="#pricing">Pricing</a>
       <a href="#audit">Audit</a>
+      <a href="login.html" id="nav-login">Log in</a>
+      <a href="signup.html" id="nav-signup">Sign up</a>
+      <a href="account.html" id="nav-account" style="display:none">Account</a>
+      <a href="billing.html" id="nav-billing" style="display:none">Billing</a>
+      <a href="#" id="nav-logout" style="display:none">Logout</a>
       <a href="#scan" class="nav-cta">Run a scan →</a>
     </div>
   </div>
@@ -1038,7 +1043,7 @@
           <li>Markdown report</li>
           <li>Community support</li>
         </ul>
-        <a href="#scan" class="price-cta">Start scanning</a>
+        <a href="signup.html" class="price-cta" data-plan="free">Start scanning</a>
       </div>
 
       <div class="price-card featured">
@@ -1052,7 +1057,7 @@
           <li>CI integration · GitHub Action</li>
           <li>Email support</li>
         </ul>
-        <a href="#scan" class="price-cta">Buy a scan</a>
+        <a href="billing.html" class="price-cta" data-plan="pro">Start Pro</a>
       </div>
 
       <div class="price-card">
@@ -1066,7 +1071,7 @@
           <li>SSO · Audit log</li>
           <li>Priority support</li>
         </ul>
-        <a href="mailto:hello@syntrix.solutions?subject=Team%20plan%20inquiry" class="price-cta">Talk to us</a>
+        <a href="billing.html" class="price-cta" data-plan="team">Start Team</a>
       </div>
     </div>
   </div>
@@ -1154,9 +1159,18 @@
 </script>
 
 <script>
+  window.SYNTRIX_API_BASE = 'https://api.syntrix.solutions';
+  window.SYNTRIX_AUTH0_DOMAIN = '';
+  window.SYNTRIX_AUTH0_CLIENT_ID = '';
+  window.SYNTRIX_AUTH0_AUDIENCE = '';
+</script>
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/billing.js"></script>
+<script>
   // ================== LIVE SCAN CLIENT ==================
   (function () {
-    const API_BASE = 'https://api.syntrix.solutions';
+    const API_BASE = window.SYNTRIX_API_BASE;
     const elTarget  = document.getElementById('scan-target');
     const elType    = document.getElementById('scan-type');
     const elDepth   = document.getElementById('scan-depth');
@@ -1165,6 +1179,9 @@
 
     let pollTimer = null;
     let startTime = null;
+    let accessToken = null;
+
+    initAuthUi();
 
     btn.addEventListener('click', submitScan);
     elTarget.addEventListener('keydown', e => {
@@ -1172,6 +1189,12 @@
     });
 
     async function submitScan() {
+      try {
+        accessToken = await window.SyntrixAuth.getAccessToken();
+      } catch (err) {
+        return showError('Please log in before running a scan.');
+      }
+
       const target = (elTarget.value || '').trim();
       if (!target) return showError('Enter a target URL.');
       if (!/^https?:\/\//i.test(target)) {
@@ -1194,7 +1217,10 @@
       try {
         const r = await fetch(API_BASE + '/api/scans', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
           body: JSON.stringify({
             target_url: target,
             scan_type: elType.value,
@@ -1221,7 +1247,9 @@
     async function pollScan(scanId) {
       const tick = async () => {
         try {
-          const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId));
+          const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId), {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          });
           if (!r.ok) throw new Error('status check failed: ' + r.status);
           const data = await r.json();
 
@@ -1255,7 +1283,9 @@
 
     async function loadFindings(scanId) {
       try {
-        const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId) + '/findings');
+        const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId) + '/findings', {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
         if (!r.ok) throw new Error('findings request failed');
         const data = await r.json();
         renderFindings(data.findings || []);
@@ -1364,6 +1394,57 @@
     function resetButton() {
       btn.disabled = false;
       btn.innerHTML = 'Start scan <span class="arrow">→</span>';
+    }
+
+    async function initAuthUi() {
+      try {
+        await window.SyntrixAuth.init();
+        const authed = await window.SyntrixAuth.isAuthenticated();
+        const login = document.getElementById('nav-login');
+        const signup = document.getElementById('nav-signup');
+        const account = document.getElementById('nav-account');
+        const billing = document.getElementById('nav-billing');
+        const logout = document.getElementById('nav-logout');
+        if (!login || !signup || !account || !billing || !logout) return;
+
+        if (authed) {
+          login.style.display = 'none';
+          signup.style.display = 'none';
+          account.style.display = '';
+          billing.style.display = '';
+          logout.style.display = '';
+        } else {
+          login.style.display = '';
+          signup.style.display = '';
+          account.style.display = 'none';
+          billing.style.display = 'none';
+          logout.style.display = 'none';
+        }
+
+        logout.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.SyntrixAuth.logout();
+        });
+
+        document.querySelectorAll('.price-cta[data-plan]').forEach((el) => {
+          el.addEventListener('click', async (event) => {
+            const plan = el.getAttribute('data-plan');
+            if (plan === 'free') return;
+            event.preventDefault();
+            if (!authed) {
+              await window.SyntrixAuth.login('signup');
+              return;
+            }
+            try {
+              await window.SyntrixBilling.startCheckout(plan);
+            } catch (err) {
+              showError(err.message || 'Unable to start checkout.');
+            }
+          });
+        });
+      } catch (err) {
+        console.warn('Auth init skipped:', err);
+      }
     }
 
     function escapeHtml(s) {

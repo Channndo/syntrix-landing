@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syntrix Billing</title>
+  <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+</head>
+<body style="font-family:system-ui;background:#060b14;color:#e5eefb;display:grid;place-items:center;min-height:100vh;">
+  <main style="max-width:560px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
+    <h1 style="margin-top:0;">Billing</h1>
+    <p>Choose a subscription to unlock paid scans.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button id="buy-pro" style="padding:10px 16px;">Start Pro subscription</button>
+      <button id="buy-team" style="padding:10px 16px;">Start Team subscription</button>
+    </div>
+    <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
+  </main>
+
+  <script>window.SYNTRIX_API_BASE = 'https://api.syntrix.solutions';</script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/billing.js"></script>
+  <script>
+    window.SYNTRIX_AUTH0_DOMAIN = '';
+    window.SYNTRIX_AUTH0_CLIENT_ID = '';
+    window.SYNTRIX_AUTH0_AUDIENCE = '';
+    (async () => {
+      await window.SyntrixAuth.init();
+      const authed = await window.SyntrixAuth.isAuthenticated();
+      if (!authed) {
+        await window.SyntrixAuth.login('login');
+        return;
+      }
+      document.getElementById('buy-pro').addEventListener('click', async () => {
+        try {
+          await window.SyntrixBilling.startCheckout('pro');
+        } catch (err) {
+          alert(err.message || String(err));
+        }
+      });
+      document.getElementById('buy-team').addEventListener('click', async () => {
+        try {
+          await window.SyntrixBilling.startCheckout('team');
+        } catch (err) {
+          alert(err.message || String(err));
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

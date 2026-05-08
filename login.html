@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syntrix Login</title>
+  <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+</head>
+<body style="font-family:system-ui;background:#060b14;color:#e5eefb;display:grid;place-items:center;min-height:100vh;">
+  <main style="max-width:480px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
+    <h1 style="margin-top:0;">Log in to Syntrix</h1>
+    <p>Use secure Auth0 login to access scans and billing.</p>
+    <button id="login-btn" style="padding:10px 16px;">Continue to login</button>
+    <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
+  </main>
+
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    window.SYNTRIX_AUTH0_DOMAIN = '';
+    window.SYNTRIX_AUTH0_CLIENT_ID = '';
+    window.SYNTRIX_AUTH0_AUDIENCE = '';
+    (async () => {
+      await window.SyntrixAuth.init();
+      document.getElementById('login-btn').addEventListener('click', () => window.SyntrixAuth.login('login'));
+    })();
+  </script>
+</body>
+</html>
