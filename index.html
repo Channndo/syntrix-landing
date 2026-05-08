@@ -175,11 +175,12 @@
     font-family: var(--mono);
     font-weight: 500;
     font-size: 14px;
-    transition: transform 0.1s, background 0.15s, border-color 0.15s;
+    transition: transform 0.1s, background 0.15s, border-color 0.15s, opacity 0.15s;
     cursor: pointer;
     border: 1px solid transparent;
   }
   .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .btn-primary {
     background: var(--cyan);
     color: var(--bg) !important;
@@ -305,6 +306,242 @@
     font-size: 14.5px;
     line-height: 1.65;
   }
+
+  /* ================ SCAN FORM ================ */
+  .scan-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px;
+  }
+  .scan-input {
+    width: 100%;
+    padding: 16px 20px;
+    background: var(--bg);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    margin-bottom: 16px;
+    transition: border-color 0.15s;
+  }
+  .scan-input:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+  .scan-input::placeholder { color: var(--text-3); }
+  .scan-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .scan-select {
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2393A4C0' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    transition: border-color 0.15s;
+  }
+  .scan-select:focus { outline: none; border-color: var(--cyan); }
+  .scan-btn { white-space: nowrap; }
+  .scan-meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    line-height: 1.6;
+  }
+  .scan-results { margin-top: 32px; }
+
+  .scan-status-bar {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .scan-status-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-2);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .scan-progress {
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .scan-progress-fill {
+    height: 100%;
+    background: var(--cyan);
+    width: 0;
+    transition: width 0.4s;
+  }
+
+  .scan-summary {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 32px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .risk-score-block {
+    text-align: center;
+    padding: 20px 32px;
+    border-right: 1px solid var(--line);
+  }
+  .risk-score-num {
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-family: var(--sans);
+  }
+  .risk-score-tier {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 8px;
+    font-weight: 600;
+  }
+  .risk-tier-Critical { color: var(--red); }
+  .risk-tier-High { color: var(--amber); }
+  .risk-tier-Medium { color: #FCD34D; }
+  .risk-tier-Low { color: var(--green); }
+  .risk-tier-Unknown { color: var(--text-2); }
+
+  .risk-summary-text {
+    color: var(--text-2);
+    font-size: 14.5px;
+    line-height: 1.65;
+  }
+  .risk-summary-text strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .findings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .finding {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    transition: border-color 0.15s;
+  }
+  .finding:hover { border-color: var(--line-2); }
+  .finding-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .severity {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .sev-critical { background: rgba(248, 113, 113, 0.12); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.3); }
+  .sev-high     { background: rgba(251, 191, 36, 0.12); color: var(--amber); border: 1px solid rgba(251, 191, 36, 0.3); }
+  .sev-medium   { background: rgba(252, 211, 77, 0.12); color: #FCD34D; border: 1px solid rgba(252, 211, 77, 0.3); }
+  .sev-low      { background: rgba(74, 222, 128, 0.12); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.3); }
+  .sev-info     { background: rgba(147, 164, 192, 0.12); color: var(--text-2); border: 1px solid rgba(147, 164, 192, 0.3); }
+  .finding-id {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    background: rgba(34, 211, 238, 0.08);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .finding-cvss {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    margin-left: auto;
+  }
+  .finding-title {
+    font-size: 16.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+  }
+  .finding-desc {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.65;
+    margin: 0 0 16px;
+  }
+  .finding-detail {
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+  .finding-detail-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .finding-evidence {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text-2);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.55;
+  }
+  .finding-remediation {
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .scan-error {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    border-radius: 10px;
+    padding: 20px 24px;
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  /* ================ /SCAN FORM ================ */
 
   .pillars {
     display: grid;
@@ -562,6 +799,9 @@
     .audit-card { padding: 32px 24px; grid-template-columns: 1fr; gap: 24px; }
     .checks-grid { grid-template-columns: 1fr; }
     .term-body { font-size: 12px; padding: 16px; }
+    .scan-controls { grid-template-columns: 1fr; }
+    .scan-summary { grid-template-columns: 1fr; gap: 16px; }
+    .risk-score-block { border-right: none; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
   }
 
   .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s, transform 0.6s; }
@@ -584,7 +824,7 @@
       <a href="#checks">Checks</a>
       <a href="#pricing">Pricing</a>
       <a href="#audit">Audit</a>
-      <a href="#platform" class="nav-cta">Run a scan →</a>
+      <a href="#scan" class="nav-cta">Run a scan →</a>
     </div>
   </div>
 </nav>
@@ -600,7 +840,7 @@
       AI agents now make millions of unsupervised decisions a day. Syntrix finds the prompt injection paths, permission gaps, and exposure patterns attackers use to turn your agents against you — before they do.
     </p>
     <div class="cta-row">
-      <a href="#platform" class="btn btn-primary">
+      <a href="#scan" class="btn btn-primary">
         Run your first scan <span class="arrow">→</span>
       </a>
       <a href="#audit" class="btn btn-secondary">
@@ -677,6 +917,44 @@
     </div>
   </div>
 </section>
+
+<!-- ================== LIVE SCAN FORM ================== -->
+<section id="scan">
+  <div class="wrap">
+    <div class="section-tag">Run a live scan</div>
+    <h2>Point Syntrix at your agent. Get findings in 90 seconds.</h2>
+    <p class="section-sub">
+      Free for the first scan. Public targets only — no auth required. Your results stream back below.
+    </p>
+
+    <div class="scan-card">
+      <input id="scan-target" type="url" class="scan-input"
+        placeholder="https://your-mcp-server.com" autocomplete="off" spellcheck="false" />
+      <div class="scan-controls">
+        <select id="scan-type" class="scan-select" aria-label="Scan type">
+          <option value="mcp">MCP server</option>
+          <option value="agent_endpoint">Agent endpoint</option>
+          <option value="tunnel">Tunnel (Cloudflare/ngrok)</option>
+        </select>
+        <select id="scan-depth" class="scan-select" aria-label="Scan depth">
+          <option value="quick">Quick (~30s)</option>
+          <option value="standard" selected>Standard (~90s)</option>
+          <option value="deep">Deep (~5m)</option>
+        </select>
+        <button id="scan-submit" class="btn btn-primary scan-btn" type="button">
+          Start scan <span class="arrow">→</span>
+        </button>
+      </div>
+      <div class="scan-meta">
+        Scans run from <strong style="color:var(--text-2)">api.syntrix.solutions</strong>.
+        Public targets only — we won't probe loopback or cloud metadata addresses.
+      </div>
+    </div>
+
+    <div id="scan-results" class="scan-results" style="display:none"></div>
+  </div>
+</section>
+<!-- ================== /LIVE SCAN FORM ================== -->
 
 <section id="platform" style="background: linear-gradient(180deg, transparent, rgba(34,211,238,0.02), transparent);">
   <div class="wrap">
@@ -762,7 +1040,7 @@
           <li>Markdown report</li>
           <li>Community support</li>
         </ul>
-        <a href="#" class="price-cta">Start scanning</a>
+        <a href="#scan" class="price-cta">Start scanning</a>
       </div>
 
       <div class="price-card featured">
@@ -776,7 +1054,7 @@
           <li>CI integration · GitHub Action</li>
           <li>Email support</li>
         </ul>
-        <a href="#" class="price-cta">Buy a scan</a>
+        <a href="#scan" class="price-cta">Buy a scan</a>
       </div>
 
       <div class="price-card">
@@ -790,7 +1068,7 @@
           <li>SSO · Audit log</li>
           <li>Priority support</li>
         </ul>
-        <a href="#" class="price-cta">Talk to us</a>
+        <a href="mailto:hello@syntrix.solutions?subject=Team%20plan%20inquiry" class="price-cta">Talk to us</a>
       </div>
     </div>
   </div>
@@ -826,10 +1104,10 @@
       <div class="footer-col">
         <h4>Product</h4>
         <ul>
-          <li><a href="#platform">Scanner</a></li>
+          <li><a href="#scan">Run a scan</a></li>
+          <li><a href="#platform">Platform</a></li>
           <li><a href="#checks">Checks</a></li>
           <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#audit">Pen test</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -859,6 +1137,7 @@
 </footer>
 
 <script>
+  // Existing reveal-on-scroll + smooth-scroll
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
   }, { threshold: 0.08 });
@@ -874,6 +1153,234 @@
       if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
   });
+</script>
+
+<script>
+  // ================== LIVE SCAN CLIENT ==================
+  (function () {
+    const API_BASE = 'https://api.syntrix.solutions';
+    const elTarget  = document.getElementById('scan-target');
+    const elType    = document.getElementById('scan-type');
+    const elDepth   = document.getElementById('scan-depth');
+    const btn       = document.getElementById('scan-submit');
+    const elResults = document.getElementById('scan-results');
+
+    let pollTimer = null;
+    let startTime = null;
+
+    btn.addEventListener('click', submitScan);
+    elTarget.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); submitScan(); }
+    });
+
+    async function submitScan() {
+      const target = (elTarget.value || '').trim();
+      if (!target) return showError('Enter a target URL.');
+      if (!/^https?:\/\//i.test(target)) {
+        return showError('Target must start with http:// or https://');
+      }
+
+      if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+      startTime = Date.now();
+      btn.disabled = true;
+      btn.innerHTML = 'Submitting...';
+
+      showStatus('Submitting scan...', 2, 'Connecting to api.syntrix.solutions');
+
+      // If first request hangs (Render cold start), tell user
+      const coldTimer = setTimeout(() => {
+        showStatus('Waking up scanner...', 6,
+          'First request after idle can take ~30s. Hang tight.');
+      }, 4000);
+
+      try {
+        const r = await fetch(API_BASE + '/api/scans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            target_url: target,
+            scan_type: elType.value,
+            depth: elDepth.value
+          })
+        });
+        clearTimeout(coldTimer);
+
+        if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`Server returned ${r.status}: ${text.slice(0, 200)}`);
+        }
+
+        const data = await r.json();
+        if (!data.scan_id) throw new Error('No scan_id in response');
+        pollScan(data.scan_id);
+      } catch (err) {
+        clearTimeout(coldTimer);
+        showError('Could not submit scan: ' + (err.message || err));
+        resetButton();
+      }
+    }
+
+    async function pollScan(scanId) {
+      const tick = async () => {
+        try {
+          const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId));
+          if (!r.ok) throw new Error('status check failed: ' + r.status);
+          const data = await r.json();
+
+          const progress = data.progress || 0;
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          showStatus(
+            `Status: ${data.status} · ${progress}%`,
+            progress,
+            `${data.target || ''} · ${elapsed}s elapsed`
+          );
+
+          if (data.status === 'complete') {
+            renderSummary(data);
+            await loadFindings(scanId);
+            resetButton();
+            return;
+          }
+          if (data.status === 'failed') {
+            showError('Scan failed. Check the target URL is reachable from the public internet.');
+            resetButton();
+            return;
+          }
+          pollTimer = setTimeout(tick, 3000);
+        } catch (err) {
+          // network blip — keep trying
+          pollTimer = setTimeout(tick, 4000);
+        }
+      };
+      tick();
+    }
+
+    async function loadFindings(scanId) {
+      try {
+        const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId) + '/findings');
+        if (!r.ok) throw new Error('findings request failed');
+        const data = await r.json();
+        renderFindings(data.findings || []);
+      } catch (err) {
+        const c = document.getElementById('findings-container');
+        if (c) c.innerHTML = '<div class="finding-desc">Findings could not be loaded. The scan completed but the findings request failed.</div>';
+      }
+    }
+
+    function showStatus(headline, progress, sub) {
+      elResults.style.display = 'block';
+      elResults.innerHTML = `
+        <div class="scan-status-bar">
+          <div class="scan-status-text">
+            <span>${escapeHtml(headline)}</span>
+            <span>${escapeHtml(sub || '')}</span>
+          </div>
+          <div class="scan-progress">
+            <div class="scan-progress-fill" style="width:${progress}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showError(msg) {
+      elResults.style.display = 'block';
+      elResults.innerHTML = `<div class="scan-error">⚠ ${escapeHtml(msg)}</div>`;
+    }
+
+    function renderSummary(scan) {
+      const tier = scan.risk_tier || 'Unknown';
+      const score = scan.risk_score != null ? scan.risk_score : '—';
+      const count = scan.findings_count || 0;
+
+      elResults.innerHTML = `
+        <div class="scan-summary">
+          <div class="risk-score-block">
+            <div class="risk-score-num risk-tier-${escapeAttr(tier)}">${score}</div>
+            <div class="risk-score-tier risk-tier-${escapeAttr(tier)}">${escapeHtml(tier)}</div>
+          </div>
+          <div class="risk-summary-text">
+            <strong>${count} ${count === 1 ? 'finding' : 'findings'}</strong>
+            from <strong>${escapeHtml(scan.target || 'target')}</strong>.
+            Score <strong>${score}/100</strong>. Risk tier <strong>${escapeHtml(tier)}</strong>.
+            ${tier === 'Critical' || tier === 'High'
+              ? 'Immediate remediation recommended.'
+              : 'Review findings below for prioritization.'}
+          </div>
+        </div>
+        <div id="findings-container" class="findings-list">
+          <div class="scan-status-text" style="padding:16px 0">Loading findings...</div>
+        </div>
+      `;
+    }
+
+    function renderFindings(findings) {
+      const container = document.getElementById('findings-container');
+      if (!container) return;
+
+      if (!findings.length) {
+        container.innerHTML = `
+          <div class="finding">
+            <h3 class="finding-title" style="margin:0">No security findings detected.</h3>
+            <p class="finding-desc" style="margin-top:8px;margin-bottom:0">
+              Either this target is well-configured or it isn't an MCP / agent endpoint surface where Syntrix's checks apply. Try a different target type or run a deeper scan.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const sevOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+      findings.sort((a, b) =>
+        (sevOrder[(a.severity || 'info').toLowerCase()] ?? 5) -
+        (sevOrder[(b.severity || 'info').toLowerCase()] ?? 5)
+      );
+
+      container.innerHTML = findings.map(f => {
+        const sev = (f.severity || 'info').toLowerCase();
+        return `
+          <div class="finding">
+            <div class="finding-head">
+              <span class="severity sev-${escapeAttr(sev)}">${escapeHtml(f.severity || 'info')}</span>
+              <span class="finding-id">${escapeHtml(f.check_id || '')}</span>
+              ${f.cvss != null ? `<span class="finding-cvss">CVSS ${escapeHtml(String(f.cvss))}</span>` : ''}
+            </div>
+            <h3 class="finding-title">${escapeHtml(f.title || 'Finding')}</h3>
+            <p class="finding-desc">${escapeHtml(f.description || '')}</p>
+            ${f.evidence ? `
+              <div class="finding-detail">
+                <div class="finding-detail-label">Evidence</div>
+                <div class="finding-evidence">${escapeHtml(f.evidence)}</div>
+              </div>
+            ` : ''}
+            ${f.remediation ? `
+              <div class="finding-detail">
+                <div class="finding-detail-label">Remediation</div>
+                <div class="finding-remediation">${escapeHtml(f.remediation)}</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function resetButton() {
+      btn.disabled = false;
+      btn.innerHTML = 'Start scan <span class="arrow">→</span>';
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    function escapeAttr(s) {
+      return String(s || '').replace(/[^A-Za-z0-9_-]/g, '');
+    }
+  })();
 </script>
 
 </body>
