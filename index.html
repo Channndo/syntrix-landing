@@ -360,6 +360,19 @@
     color: var(--text-3);
     line-height: 1.6;
   }
+  .scan-auth-hint {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 14px;
+    line-height: 1.65;
+  }
+  .scan-auth-hint a {
+    color: var(--cyan);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .scan-auth-hint a:hover { text-decoration: underline; }
   .scan-results { margin-top: 32px; }
 
   .scan-status-bar {
@@ -538,6 +551,10 @@
     font-family: var(--mono);
     font-size: 13px;
     line-height: 1.6;
+  }
+  .scan-error a.scan-error-link {
+    color: var(--cyan);
+    font-weight: 600;
   }
   /* ================ /SCAN FORM ================ */
 
@@ -792,7 +809,8 @@
     .hero { padding: 64px 0 48px; }
     section { padding: 64px 0; }
     .nav-links { gap: 16px; }
-    .nav-links a:not(.nav-cta) { display: none; }
+    /* Keep auth + primary CTA visible on small screens */
+    .nav-links a:not(.nav-cta):not(.nav-auth) { display: none; }
     .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
     .audit-card { padding: 32px 24px; grid-template-columns: 1fr; gap: 24px; }
     .checks-grid { grid-template-columns: 1fr; }
@@ -822,11 +840,11 @@
       <a href="#checks">Checks</a>
       <a href="#pricing">Pricing</a>
       <a href="#audit">Audit</a>
-      <a href="login.html" id="nav-login">Log in</a>
-      <a href="signup.html" id="nav-signup">Sign up</a>
-      <a href="account.html" id="nav-account" style="display:none">Account</a>
-      <a href="billing.html" id="nav-billing" style="display:none">Billing</a>
-      <a href="#" id="nav-logout" style="display:none">Logout</a>
+      <a href="login.html" id="nav-login" class="nav-auth">Log in</a>
+      <a href="signup.html" id="nav-signup" class="nav-auth">Sign up</a>
+      <a href="account.html" id="nav-account" class="nav-auth" style="display:none">Account</a>
+      <a href="billing.html" id="nav-billing" class="nav-auth" style="display:none">Billing</a>
+      <a href="#" id="nav-logout" class="nav-auth" style="display:none">Logout</a>
       <a href="#scan" class="nav-cta">Run a scan →</a>
     </div>
   </div>
@@ -927,7 +945,7 @@
     <div class="section-tag">Run a live scan</div>
     <h2>Point Syntrix at your agent. Get findings in 90 seconds.</h2>
     <p class="section-sub">
-      Free for the first scan. Public targets only — no auth required. Your results stream back below.
+      Sign in with your account and an active plan to run scans. Public targets only — results stream below.
     </p>
 
     <div class="scan-card">
@@ -952,6 +970,14 @@
         Scans run from <strong style="color:var(--text-2)">api.syntrix.solutions</strong>.
         Public targets only — we won't probe loopback or cloud metadata addresses.
       </div>
+      <p id="scan-auth-hint" class="scan-auth-hint">
+        <strong style="color:var(--text)">Account required.</strong>
+        <a href="login.html">Log in</a>
+        ·
+        <a href="signup.html">Sign up</a>
+        ·
+        <a href="billing.html">Plans &amp; billing</a>
+      </p>
     </div>
 
     <div id="scan-results" class="scan-results" style="display:none"></div>
@@ -1192,7 +1218,7 @@
       try {
         accessToken = await window.SyntrixAuth.getAccessToken();
       } catch (err) {
-        return showError('Please log in before running a scan.');
+        return showAuthRequiredError();
       }
 
       const target = (elTarget.value || '').trim();
@@ -1229,6 +1255,17 @@
         });
         clearTimeout(coldTimer);
 
+        if (r.status === 401) {
+          showAuthRequiredError();
+          resetButton();
+          return;
+        }
+        if (r.status === 403) {
+          const text = await r.text();
+          showError('Subscription required: ' + (text.slice(0, 180) || 'Visit billing to activate a plan.'));
+          resetButton();
+          return;
+        }
         if (!r.ok) {
           const text = await r.text();
           throw new Error(`Server returned ${r.status}: ${text.slice(0, 200)}`);
@@ -1313,6 +1350,19 @@
     function showError(msg) {
       elResults.style.display = 'block';
       elResults.innerHTML = `<div class="scan-error">⚠ ${escapeHtml(msg)}</div>`;
+    }
+
+    function showAuthRequiredError() {
+      elResults.style.display = 'block';
+      elResults.innerHTML = `
+        <div class="scan-error">
+          ⚠ Sign in to run a scan.
+          <a href="login.html" class="scan-error-link">Log in</a>
+          or
+          <a href="signup.html" class="scan-error-link">create an account</a>.
+          An active subscription may be required — see
+          <a href="billing.html" class="scan-error-link">billing</a>.
+        </div>`;
     }
 
     function renderSummary(scan) {
@@ -1407,18 +1457,21 @@
         const logout = document.getElementById('nav-logout');
         if (!login || !signup || !account || !billing || !logout) return;
 
+        const scanHint = document.getElementById('scan-auth-hint');
         if (authed) {
           login.style.display = 'none';
           signup.style.display = 'none';
           account.style.display = '';
           billing.style.display = '';
           logout.style.display = '';
+          if (scanHint) scanHint.style.display = 'none';
         } else {
           login.style.display = '';
           signup.style.display = '';
           account.style.display = 'none';
           billing.style.display = 'none';
           logout.style.display = 'none';
+          if (scanHint) scanHint.style.display = '';
         }
 
         logout.addEventListener('click', (e) => {
