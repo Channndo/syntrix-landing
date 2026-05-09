@@ -10,6 +10,8 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: fields.email,
+        first_name: fields.first_name || '',
+        last_name: fields.last_name || '',
         name: fields.name || '',
         phone: fields.phone || '',
         business_address: fields.business_address || '',

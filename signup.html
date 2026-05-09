@@ -68,9 +68,15 @@
           <label for="waitlist-email">Work email</label>
           <input id="waitlist-email" type="email" required placeholder="you@company.com" autocomplete="email" maxlength="320" />
         </div>
-        <div class="auth-field">
-          <label for="waitlist-name">Full name</label>
-          <input id="waitlist-name" type="text" required placeholder="Jane Doe" autocomplete="name" maxlength="200" />
+        <div class="auth-field-row">
+          <div class="auth-field">
+            <label for="waitlist-first-name">First name</label>
+            <input id="waitlist-first-name" type="text" required placeholder="Jane" autocomplete="given-name" maxlength="100" />
+          </div>
+          <div class="auth-field">
+            <label for="waitlist-last-name">Last name</label>
+            <input id="waitlist-last-name" type="text" required placeholder="Doe" autocomplete="family-name" maxlength="100" />
+          </div>
         </div>
         <div class="auth-field">
           <label for="waitlist-phone">Phone <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
@@ -142,7 +148,8 @@
       const err = document.getElementById('auth-error');
       const form = document.getElementById('waitlist-form');
       const emailInput = document.getElementById('waitlist-email');
-      const nameInput = document.getElementById('waitlist-name');
+      const firstNameInput = document.getElementById('waitlist-first-name');
+      const lastNameInput = document.getElementById('waitlist-last-name');
       const phoneInput = document.getElementById('waitlist-phone');
       const addressInput = document.getElementById('waitlist-address');
       const referralSelect = document.getElementById('waitlist-referral');
@@ -170,9 +177,13 @@
             const extra = (referralOtherInput.value || '').trim();
             referral = extra ? 'Other: ' + extra : 'Other';
           }
+          const first = firstNameInput.value.trim();
+          const last = lastNameInput.value.trim();
           await window.SyntrixWaitlist.submitWaitlist({
             email: emailInput.value.trim(),
-            name: nameInput.value.trim(),
+            first_name: first,
+            last_name: last,
+            name: [first, last].filter(Boolean).join(' '),
             phone: phoneInput.value.trim(),
             business_address: addressInput.value.trim(),
             referral_source: referral,

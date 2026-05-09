@@ -242,6 +242,23 @@ html, body { margin: 0; padding: 0; }
   color: var(--cyan);
 }
 
+.auth-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 520px) {
+  .auth-field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.auth-field-row .auth-field {
+  margin-bottom: 0;
+}
+
 .auth-field {
   margin-bottom: 16px;
   text-align: left;

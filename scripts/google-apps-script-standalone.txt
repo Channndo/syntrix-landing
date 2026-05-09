@@ -3,11 +3,16 @@
 //
 // Do NOT paste markdown separators (=== or ---) — they cause syntax errors.
 //
+// NEW spreadsheet (first + last name columns): run createNewWaitlistSpreadsheet()
+//   → copies URL from Executions log → webhook keeps same deployment URL.
+//
 // 1) Replace NOTIFY_EMAIL below. Optionally set EXPECTED_SECRET (match Netlify APPS_SCRIPT_SECRET).
-// 2) Select createSyntrixSignupsWorkbook → Run → authorize.
-// 3) View → Logs — copy the spreadsheet URL from "Created: ..."
+// 2) Run createNewWaitlistSpreadsheet() OR legacy createSyntrixSignupsWorkbook() → authorize.
+// 3) View → Executions — copy the spreadsheet URL from the log.
 // 4) Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone
-// 5) Put the Web App URL or deployment ID in Netlify env only (never in public HTML).
+// 5) Put the Web App URL or deployment ID in Netlify env only (never in git or public HTML).
+//
+// EXPECTED_SECRET must be ONE straight-quoted line — no line breaks inside '...'.
 // =============================================================================
 
 var PROP_KEY = 'SYNTRIX_WAITLIST_SHEET_ID';
@@ -17,31 +22,68 @@ var SHEET_NAME = 'Signups';
 
 var EXPECTED_SECRET = '';
 
+/** 11 columns — must match appendRow order in doPost */
+var SIGNUPS_HEADERS = [
+  'Timestamp',
+  'Email',
+  'First name',
+  'Last name',
+  'Full name',
+  'Phone',
+  'Business address',
+  'Referral',
+  'Source',
+  'Type',
+  'Submitted ISO',
+];
+
+/**
+ * Use this for a brand-new spreadsheet with First name / Last name / Full name columns.
+ * Updates script storage so doPost() writes here. Old file is left in Drive (delete manually if you want).
+ */
+function createNewWaitlistSpreadsheet() {
+  var title =
+    'Syntrix waitlist ' +
+    Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HHmm');
+  return createSpreadsheetWithHeaders_(title);
+}
+
+/** Same as older docs — creates "Syntrix signups" */
 function createSyntrixSignupsWorkbook() {
-  var ss = SpreadsheetApp.create('Syntrix signups');
+  return createSpreadsheetWithHeaders_('Syntrix signups');
+}
+
+function createSpreadsheetWithHeaders_(title) {
+  var ss = SpreadsheetApp.create(title);
   PropertiesService.getScriptProperties().setProperty(PROP_KEY, ss.getId());
   var sh = ss.getSheets()[0];
   sh.setName(SHEET_NAME);
-  sh.appendRow([
-    'Timestamp',
-    'Email',
-    'Full name',
-    'Phone',
-    'Business address',
-    'Referral',
-    'Source',
-    'Type',
-    'Submitted ISO',
-  ]);
-  Logger.log('Created: ' + ss.getUrl());
+  sh.getRange(1, 1, 1, SIGNUPS_HEADERS.length).setValues([SIGNUPS_HEADERS]);
+  var url = ss.getUrl();
+  Logger.log('NEW spreadsheet: ' + url);
+  Logger.log('Script property updated — same web app URL works; redeploy only if you changed code.');
+  return url;
 }
 
 function getSpreadsheet() {
   var id = PropertiesService.getScriptProperties().getProperty(PROP_KEY);
   if (!id) {
-    throw new Error('Run createSyntrixSignupsWorkbook() once, then deploy the web app.');
+    throw new Error('Run createNewWaitlistSpreadsheet() or createSyntrixSignupsWorkbook() once.');
   }
   return SpreadsheetApp.openById(id);
+}
+
+/**
+ * Old layouts had column C = "Full name" only. Insert two columns so C/D = First/Last, E = Full name.
+ * Safe to call every POST; no-op if headers are already new.
+ */
+function upgradeLegacySignupsLayoutIfNeeded(sh) {
+  var c1 = String(sh.getRange(1, 3).getValue()).trim();
+  var d1 = String(sh.getRange(1, 4).getValue()).trim();
+  if (c1 === 'Full name' && d1 !== 'Last name') {
+    sh.insertColumnsBefore(3, 2);
+    sh.getRange(1, 3, 1, 5).setValues([['First name', 'Last name', 'Full name']]);
+  }
 }
 
 function doPost(e) {
@@ -65,21 +107,18 @@ function doPost(e) {
   var sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
-    sh.appendRow([
-      'Timestamp',
-      'Email',
-      'Full name',
-      'Phone',
-      'Business address',
-      'Referral',
-      'Source',
-      'Type',
-      'Submitted ISO',
-    ]);
+    sh.getRange(1, 1, 1, SIGNUPS_HEADERS.length).setValues([SIGNUPS_HEADERS]);
+  } else {
+    upgradeLegacySignupsLayoutIfNeeded(sh);
   }
 
   var ts = new Date();
-  var name = String(data.name || '');
+  var first = String(data.first_name || '').trim();
+  var last = String(data.last_name || '').trim();
+  var full = String(data.name || '').trim();
+  if (!full && (first || last)) {
+    full = (first + ' ' + last).trim();
+  }
   var phone = String(data.phone || '');
   var addr = String(data.business_address || '');
   var referral = String(data.referral_source || '');
@@ -87,7 +126,7 @@ function doPost(e) {
   var typ = String(data.type || '');
   var iso = String(data.ts || '');
 
-  sh.appendRow([ts, email, name, phone, addr, referral, src, typ, iso]);
+  sh.appendRow([ts, email, first, last, full, phone, addr, referral, src, typ, iso]);
 
   MailApp.sendEmail({
     to: NOTIFY_EMAIL,
@@ -97,8 +136,14 @@ function doPost(e) {
       'Email: ' +
       email +
       '\n' +
+      'First name: ' +
+      first +
+      '\n' +
+      'Last name: ' +
+      last +
+      '\n' +
       'Full name: ' +
-      name +
+      (full || '(none)') +
       '\n' +
       'Phone: ' +
       phone +
@@ -127,7 +172,7 @@ function doPost(e) {
 
 function doGet(e) {
   return ContentService.createTextOutput(
-    'Syntrix waitlist webhook - POST JSON here. Run createSyntrixSignupsWorkbook() once first.'
+    'Syntrix waitlist webhook — POST JSON here. Run createNewWaitlistSpreadsheet() first.'
   ).setMimeType(ContentService.MimeType.TEXT);
 }
 

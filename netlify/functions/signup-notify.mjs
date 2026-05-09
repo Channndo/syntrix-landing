@@ -99,11 +99,19 @@ function deliveryMode() {
 }
 
 function signupTextBody(payload) {
+  const fn = payload.first_name || "";
+  const ln = payload.last_name || "";
+  const combined =
+    payload.name ||
+    [fn, ln].filter(Boolean).join(" ").trim() ||
+    "(none)";
   return [
     "New Syntrix signup / waitlist entry",
     "",
     `Email: ${payload.email}`,
-    `Full name: ${payload.name || "(none)"}`,
+    `First name: ${fn || "(none)"}`,
+    `Last name: ${ln || "(none)"}`,
+    `Full name: ${combined}`,
     `Phone: ${payload.phone || "(none)"}`,
     `Business address: ${payload.business_address || "(none)"}`,
     `How they heard about us: ${payload.referral_source || "(none)"}`,
@@ -308,7 +316,16 @@ export const handler = async (event) => {
     };
   }
 
-  const name = body.name ? String(body.name).trim().slice(0, 200) : "";
+  const first_name = body.first_name
+    ? String(body.first_name).trim().slice(0, 100)
+    : "";
+  const last_name = body.last_name
+    ? String(body.last_name).trim().slice(0, 100)
+    : "";
+  let name = body.name ? String(body.name).trim().slice(0, 200) : "";
+  if (!name && (first_name || last_name)) {
+    name = [first_name, last_name].filter(Boolean).join(" ").slice(0, 200);
+  }
   const phone = body.phone ? String(body.phone).trim().slice(0, 40) : "";
   const business_address = body.business_address
     ? String(body.business_address).trim().slice(0, 500)
@@ -321,6 +338,8 @@ export const handler = async (event) => {
 
   const payload = {
     email,
+    first_name,
+    last_name,
     name,
     phone,
     business_address,
