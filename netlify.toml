@@ -1,5 +1,10 @@
 # Option A — env vars at build time: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE
 # Option B — edit assets/js/auth-overlay.js in git (SPA domain + client ID are public)
+# Waitlist → Google Sheet: set APPS_SCRIPT_URL (+ optional APPS_SCRIPT_SECRET) in Netlify env.
+# Paste the sample script from scripts/google-apps-script-sample.txt into the Sheet’s Apps Script.
 [build]
   command = "npm run build"
   publish = "."
+
+[functions]
+  directory = "netlify/functions"

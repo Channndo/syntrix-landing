@@ -1,0 +1,96 @@
+================================================================================
+GOOGLE SHEETS + EMAIL — paste into your Sheet (Extensions → Apps Script)
+================================================================================
+1. Open the Google Sheet owned by chandler.hill.24@gmail.com (or any account).
+2. Create a tab named exactly: Signups   (or change SHEET_NAME below to match)
+3. Extensions → Apps Script → delete default code → paste the script below
+4. Run once: select function "authorize" is not needed — first save, then Deploy →
+   New deployment → type "Web app":
+     - Execute as: Me
+     - Who has access: Anyone
+5. Copy the Web app URL → Netlify env var APPS_SCRIPT_URL
+6. Pick a random secret string, put it in EXPECTED_SECRET below AND in Netlify APPS_SCRIPT_SECRET
+7. Redeploy Netlify (functions pick up new env automatically on next deploy)
+
+--------------------------------------------------------------------------------
+// ----- begin Apps Script -----
+const NOTIFY_EMAIL = 'chandler.hill.24@gmail.com';
+const SHEET_NAME = 'Signups';
+
+// Must match Netlify APPS_SCRIPT_SECRET — leave blank on BOTH sides to skip check (not recommended)
+const EXPECTED_SECRET = '';
+
+function doPost(e) {
+  let data;
+  try {
+    data = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return jsonOut({ ok: false, error: 'bad_json' }, 400);
+  }
+
+  if (EXPECTED_SECRET && data.secret !== EXPECTED_SECRET) {
+    return jsonOut({ ok: false, error: 'unauthorized' }, 403);
+  }
+
+  var email = String(data.email || '').trim();
+  if (!email) {
+    return jsonOut({ ok: false, error: 'no_email' }, 400);
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.appendRow(['Timestamp', 'Email', 'Name', 'Source', 'Type', 'ISO time', 'Owner ref']);
+  }
+
+  var ts = new Date();
+  sh.appendRow([
+    ts,
+    email,
+    data.name || '',
+    data.source || '',
+    data.type || '',
+    data.ts || '',
+    data.ownerEmail || NOTIFY_EMAIL,
+  ]);
+
+  MailApp.sendEmail({
+    to: NOTIFY_EMAIL,
+    subject: '[Syntrix signup] ' + email,
+    body:
+      'New signup / waitlist entry\n\n' +
+      'Email: ' +
+      email +
+      '\n' +
+      'Name: ' +
+      (data.name || '(none)') +
+      '\n' +
+      'Source: ' +
+      (data.source || '') +
+      '\n' +
+      'Type: ' +
+      (data.type || '') +
+      '\n' +
+      'Time: ' +
+      ts.toISOString(),
+  });
+
+  return jsonOut({ ok: true }, 200);
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput('Syntrix waitlist webhook — POST JSON here').setMimeType(
+    ContentService.MimeType.TEXT
+  );
+}
+
+function jsonOut(obj, code) {
+  var out = ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
+    ContentService.MimeType.JSON
+  );
+  // Apps Script ignores HTTP status in most setups; callers check JSON body.
+  return out;
+}
+// ----- end Apps Script -----
+--------------------------------------------------------------------------------

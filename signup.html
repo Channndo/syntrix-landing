@@ -27,27 +27,51 @@
       </div>
       <h1>Create your account</h1>
       <p class="auth-lede">
-        One account for live scans, private results, and subscription billing. We’ll send you through a quick, secure login — no passwords stored on our marketing site.
+        Join the early access list (we save your email to our Google Sheet and notify the team instantly), then continue through secure signup when authentication is enabled.
+      </p>
+
+      <p class="auth-section-title">Step 1 — Join the list</p>
+      <p class="auth-muted-small">
+        Your email is appended to our sheet and sent to <strong style="color:var(--text)">chandler.hill.24@gmail.com</strong> so nothing gets lost while we finish the live Auth0 flow.
+      </p>
+
+      <form id="waitlist-form" action="#" autocomplete="on">
+        <div class="auth-field">
+          <label for="waitlist-email">Work email</label>
+          <input id="waitlist-email" type="email" required placeholder="you@company.com" autocomplete="email" maxlength="320" />
+        </div>
+        <div class="auth-field">
+          <label for="waitlist-name">Name <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
+          <input id="waitlist-name" type="text" placeholder="Your name" autocomplete="name" maxlength="200" />
+        </div>
+        <button type="submit" id="waitlist-submit" class="auth-btn-secondary">Save my spot &amp; notify the team</button>
+      </form>
+      <p id="waitlist-feedback-success" class="auth-feedback success" role="status" aria-live="polite"></p>
+      <p id="waitlist-feedback-error" class="auth-feedback error" role="alert"></p>
+
+      <div class="auth-divider"></div>
+
+      <p class="auth-section-title">Step 2 — Secure account (Auth0)</p>
+      <p class="auth-muted-small" style="margin-bottom:20px;">
+        After you’ve joined the list, open a full login when Auth0 is connected on this deployment.
       </p>
 
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
 
-      <!-- Shown when Auth0 env is wired (Netlify secrets or local auth-config.js) -->
       <div id="auth-panel-ready" hidden>
         <button id="signup-btn" type="button" class="auth-btn-primary">Continue to secure sign-up</button>
       </div>
 
-      <!-- Friendly fallback when signup isn’t wired yet -->
       <div id="auth-panel-soon" hidden>
         <div class="auth-msg auth-msg--soon">
-          <strong>Account sign-up is finishing deployment</strong>
-          Secure login is powered by our authentication partner. Once the connection is complete, this button will take you straight to email sign-up — usually within a deploy or two after launch.
+          <strong>Auth0 signup is finishing on this deployment</strong>
+          You can still join the sheet above — once Auth0 credentials are wired, this button sends you straight through email-based signup with our provider.
           <span style="display:block;margin-top:12px;font-size:14px;color:var(--text-mid);">
-            Need early access?
-            <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20account%20access" style="color:var(--cyan);font-weight:600;">Email the team</a>
+            Questions?
+            <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20account%20access" style="color:var(--cyan);font-weight:600;">hello@syntrix.solutions</a>
           </span>
         </div>
-        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Sign-up unavailable for the moment</button>
+        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Sign-up via Auth0 not ready yet</button>
       </div>
 
       <div class="auth-footer-links">
@@ -55,17 +79,19 @@
       </div>
 
       <details class="auth-details">
-        <summary>For teams self-hosting</summary>
+        <summary>For operators (Netlify + Google Sheet)</summary>
         <p style="margin:12px 0 0;">
-          Fastest: edit <strong>assets/js/auth-overlay.js</strong> with your Auth0 domain and SPA client ID, then deploy.
-          Or on Netlify set <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, <strong>AUTH0_AUDIENCE</strong> and run a build — see <strong>npm run build</strong> / <strong>scripts/write-auth-config.mjs</strong>.
-          Callback URL:
+          Set Netlify env <strong>APPS_SCRIPT_URL</strong> (+ optional <strong>APPS_SCRIPT_SECRET</strong>). Paste script from <strong>scripts/google-apps-script-sample.txt</strong> into the Sheet → Apps Script, deploy Web app URL, redeploy Netlify.<br/><br/>
+          Auth0:<br/>
+          Fill <strong>assets/js/auth-overlay.js</strong> or Netlify AUTH0_* build vars.<br/>
+          Callback:
           <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>
         </p>
       </details>
     </div>
   </main>
 
+  <script src="assets/js/signup-notify.js"></script>
   <script src="assets/js/auth-config.js"></script>
   <script src="assets/js/auth-overlay.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
@@ -76,11 +102,51 @@
       const soon = document.getElementById('auth-panel-soon');
       const btn = document.getElementById('signup-btn');
       const err = document.getElementById('auth-error');
+      const form = document.getElementById('waitlist-form');
+      const emailInput = document.getElementById('waitlist-email');
+      const nameInput = document.getElementById('waitlist-name');
+      const wlSubmit = document.getElementById('waitlist-submit');
+      const okFb = document.getElementById('waitlist-feedback-success');
+      const errFb = document.getElementById('waitlist-feedback-error');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        okFb.textContent = '';
+        errFb.textContent = '';
+        okFb.classList.remove('success');
+        errFb.classList.remove('error');
+        wlSubmit.disabled = true;
+
+        try {
+          await window.SyntrixWaitlist.submitWaitlist({
+            email: emailInput.value.trim(),
+            name: nameInput.value.trim(),
+            source: 'signup_page',
+            type: 'early_access_sheet',
+          });
+          okFb.textContent =
+            "You're on the list — we appended this row to our Google Sheet and emailed chandler.hill.24@gmail.com.";
+          okFb.classList.add('success');
+        } catch (werr) {
+          const code = werr.code || '';
+          if (code === 'waitlist_not_configured') {
+            errFb.textContent =
+              'Sheet save isn\'t wired on the server yet. In Netlify, set APPS_SCRIPT_URL using the snippet in scripts/google-apps-script-sample.txt, then redeploy.';
+          } else {
+            errFb.textContent =
+              (werr && werr.message) ||
+              'Could not save right now — try again or email hello@syntrix.solutions.';
+          }
+          errFb.classList.add('error');
+        } finally {
+          wlSubmit.disabled = false;
+        }
+      });
 
       await window.SyntrixAuth.init();
 
-      const ok = window.SyntrixAuth.isConfigured();
-      if (ok) {
+      const okAuth = window.SyntrixAuth.isConfigured();
+      if (okAuth) {
         ready.hidden = false;
       } else {
         soon.hidden = false;

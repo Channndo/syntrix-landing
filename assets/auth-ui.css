@@ -6,6 +6,7 @@
   --bg: #060b14;
   --bg-card: #0a1320;
   --line: #1a2942;
+  --line-2: #243653;
   --text: #e5eefb;
   --text-mid: #93a4c0;
   --text-dim: #5c6b85;
@@ -239,4 +240,103 @@ html, body { margin: 0; padding: 0; }
 .auth-outline-btn.auth-btn-primary:hover:not(:disabled) {
   border-color: var(--cyan);
   color: var(--cyan);
+}
+
+.auth-field {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.auth-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  transition: border-color 0.15s;
+}
+
+.auth-field input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.auth-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.auth-btn-secondary:hover:not(:disabled) {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.auth-btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.auth-feedback {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  display: none;
+}
+
+.auth-feedback.success {
+  display: block;
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.1);
+  color: #bbf7d0;
+}
+
+.auth-feedback.error {
+  display: block;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fecaca;
+}
+
+.auth-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 8px 0 16px;
+  text-align: left;
+}
+
+.auth-muted-small {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  text-align: left;
+  margin: 0 0 18px;
 }
