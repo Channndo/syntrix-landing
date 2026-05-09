@@ -1,0 +1,110 @@
+// =============================================================================
+// SYNTRIX WAITLIST — Standalone Apps Script (paste ONLY this file into Code.gs)
+//
+// Do NOT paste markdown separators (=== or ---) — they cause syntax errors.
+//
+// 1) Replace NOTIFY_EMAIL below. Optionally set EXPECTED_SECRET (match Netlify APPS_SCRIPT_SECRET).
+// 2) Select createSyntrixSignupsWorkbook → Run → authorize.
+// 3) View → Logs — copy the spreadsheet URL from "Created: ..."
+// 4) Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone
+// 5) Copy Web app URL → Netlify APPS_SCRIPT_URL. Redeploy Netlify.
+//    Clear Netlify WAITLIST_SCANNER_INGEST_URL if you want this script (not scanner) first.
+// =============================================================================
+
+var PROP_KEY = 'SYNTRIX_WAITLIST_SHEET_ID';
+
+// Replace with your inbox:
+var NOTIFY_EMAIL = 'your-inbox@example.com';
+var SHEET_NAME = 'Signups';
+
+// Must match Netlify APPS_SCRIPT_SECRET — leave '' on BOTH sides to skip (weak):
+var EXPECTED_SECRET = '';
+
+/**
+ * Run ONCE. Creates "Syntrix signups" in Drive and stores its ID.
+ */
+function createSyntrixSignupsWorkbook() {
+  var ss = SpreadsheetApp.create('Syntrix signups');
+  PropertiesService.getScriptProperties().setProperty(PROP_KEY, ss.getId());
+  var sh = ss.getSheets()[0];
+  sh.setName(SHEET_NAME);
+  sh.appendRow(['Timestamp', 'Email', 'Name', 'Source', 'Type', 'ISO time', 'Owner ref']);
+  Logger.log('Created: ' + ss.getUrl());
+}
+
+function getSpreadsheet() {
+  var id = PropertiesService.getScriptProperties().getProperty(PROP_KEY);
+  if (!id) {
+    throw new Error('Run createSyntrixSignupsWorkbook() once, then deploy the web app.');
+  }
+  return SpreadsheetApp.openById(id);
+}
+
+function doPost(e) {
+  var data;
+  try {
+    data = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return jsonOut({ ok: false, error: 'bad_json' });
+  }
+
+  if (EXPECTED_SECRET && data.secret !== EXPECTED_SECRET) {
+    return jsonOut({ ok: false, error: 'unauthorized' });
+  }
+
+  var email = String(data.email || '').trim();
+  if (!email) {
+    return jsonOut({ ok: false, error: 'no_email' });
+  }
+
+  var ss = getSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.appendRow(['Timestamp', 'Email', 'Name', 'Source', 'Type', 'ISO time', 'Owner ref']);
+  }
+
+  var ts = new Date();
+  sh.appendRow([
+    ts,
+    email,
+    data.name || '',
+    data.source || '',
+    data.type || '',
+    data.ts || '',
+    data.ownerEmail || NOTIFY_EMAIL,
+  ]);
+
+  MailApp.sendEmail({
+    to: NOTIFY_EMAIL,
+    subject: '[Syntrix signup] ' + email,
+    body:
+      'New signup / waitlist entry\n\n' +
+      'Email: ' +
+      email +
+      '\n' +
+      'Name: ' +
+      (data.name || '(none)') +
+      '\n' +
+      'Source: ' +
+      (data.source || '') +
+      '\n' +
+      'Type: ' +
+      (data.type || '') +
+      '\n' +
+      'Time: ' +
+      ts.toISOString(),
+  });
+
+  return jsonOut({ ok: true });
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(
+    'Syntrix waitlist webhook - POST JSON here. Run createSyntrixSignupsWorkbook() once first.'
+  ).setMimeType(ContentService.MimeType.TEXT);
+}
+
+function jsonOut(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
