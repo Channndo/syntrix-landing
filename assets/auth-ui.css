@@ -97,6 +97,27 @@ html, body { margin: 0; padding: 0; }
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
 }
 
+.auth-card--wide {
+  max-width: 840px;
+}
+
+.auth-enterprise-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .auth-enterprise-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.auth-enterprise-col .auth-section-title {
+  margin-top: 0;
+}
+
 .auth-pill {
   display: inline-flex;
   align-items: center;

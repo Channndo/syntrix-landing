@@ -1,92 +1,159 @@
 // =============================================================================
-// SYNTRIX WAITLIST — Standalone Apps Script (paste ONLY this file into Code.gs)
+// SYNTRIX — Standalone Apps Script (paste ONLY into Code.gs)
 //
-// Do NOT paste markdown separators (=== or ---) — they cause syntax errors.
+// TWO spreadsheets: consumer (password sign-ups) vs enterprise — separate files in Drive.
 //
-// NEW spreadsheet (first + last name columns): run createNewWaitlistSpreadsheet()
-//   → copies URL from Executions log → webhook keeps same deployment URL.
-//
-// 1) Replace NOTIFY_EMAIL below. Optionally set EXPECTED_SECRET (match Netlify APPS_SCRIPT_SECRET).
-// 2) Run createNewWaitlistSpreadsheet() OR legacy createSyntrixSignupsWorkbook() → authorize.
-// 3) View → Executions — copy the spreadsheet URL from the log.
-// 4) Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone
-// 5) Put the Web App URL or deployment ID in Netlify env only (never in git or public HTML).
-//
-// EXPECTED_SECRET must be ONE straight-quoted line — no line breaks inside '...'.
+// 1) Set NOTIFY_EMAIL, EXPECTED_SECRET (match Netlify APPS_SCRIPT_SECRET).
+// 2) Run createConsumerSpreadsheet() then createEnterpriseSpreadsheet() → copy both URLs from logs.
+// 3) Do not Run doPost or notifyEmail from the toolbar — no HTTP body / no args. Use testMailFromEditor() for a mail test.
+// 4) Deploy → Web app → Anyone — put URL(s) in Netlify:
+//    - Same script, two deployments: consumer URL → APPS_SCRIPT_CONSUMER_URL,
+//      enterprise URL → APPS_SCRIPT_ENTERPRISE_URL
+//    - OR one URL → APPS_SCRIPT_URL (doPost routes by JSON type).
 // =============================================================================
 
-var PROP_KEY = 'SYNTRIX_WAITLIST_SHEET_ID';
+function testMailFromEditor() {
+  notifyEmail(
+    'Syntrix — Apps Script mail test',
+    'If you see this message, MailApp and NOTIFY_EMAIL work. Safe to delete.'
+  );
+  Logger.log('Sent test email to ' + NOTIFY_EMAIL);
+}
+
+var PROP_CONSUMER = 'SYNTRIX_CONSUMER_SHEET_ID';
+var PROP_ENTERPRISE = 'SYNTRIX_ENTERPRISE_SHEET_ID';
 
 var NOTIFY_EMAIL = 'your-inbox@example.com';
-var SHEET_NAME = 'Signups';
+var SHEET_CONSUMER = 'Password signups';
+var SHEET_ENTERPRISE = 'Enterprise signups';
 
 var EXPECTED_SECRET = '';
 
-/** 11 columns — must match appendRow order in doPost */
-var SIGNUPS_HEADERS = [
+var CONSUMER_HEADERS = [
   'Timestamp',
   'Email',
   'First name',
   'Last name',
-  'Full name',
-  'Phone',
-  'Business address',
   'Referral',
   'Source',
   'Type',
   'Submitted ISO',
 ];
 
-/**
- * Use this for a brand-new spreadsheet with First name / Last name / Full name columns.
- * Updates script storage so doPost() writes here. Old file is left in Drive (delete manually if you want).
- */
-function createNewWaitlistSpreadsheet() {
-  var title =
-    'Syntrix waitlist ' +
-    Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HHmm');
-  return createSpreadsheetWithHeaders_(title);
-}
+var ENTERPRISE_HEADERS = [
+  'Timestamp',
+  'Business name',
+  'Business address',
+  'Referral (organization)',
+  'Supervisor name',
+  'Employee first name',
+  'Employee last name',
+  'Company email',
+  'Phone',
+  'Referral (employee)',
+  'Source',
+  'Type',
+  'Submitted ISO',
+];
 
-/** Same as older docs — creates "Syntrix signups" */
-function createSyntrixSignupsWorkbook() {
-  return createSpreadsheetWithHeaders_('Syntrix signups');
-}
-
-function createSpreadsheetWithHeaders_(title) {
-  var ss = SpreadsheetApp.create(title);
-  PropertiesService.getScriptProperties().setProperty(PROP_KEY, ss.getId());
+function createConsumerSpreadsheet() {
+  var ss = SpreadsheetApp.create('Syntrix — password signups');
+  PropertiesService.getScriptProperties().setProperty(PROP_CONSUMER, ss.getId());
   var sh = ss.getSheets()[0];
-  sh.setName(SHEET_NAME);
-  sh.getRange(1, 1, 1, SIGNUPS_HEADERS.length).setValues([SIGNUPS_HEADERS]);
-  var url = ss.getUrl();
-  Logger.log('NEW spreadsheet: ' + url);
-  Logger.log('Script property updated — same web app URL works; redeploy only if you changed code.');
-  return url;
+  sh.setName(SHEET_CONSUMER);
+  sh.getRange(1, 1, 1, CONSUMER_HEADERS.length).setValues([CONSUMER_HEADERS]);
+  Logger.log('CONSUMER spreadsheet: ' + ss.getUrl());
 }
 
-function getSpreadsheet() {
-  var id = PropertiesService.getScriptProperties().getProperty(PROP_KEY);
-  if (!id) {
-    throw new Error('Run createNewWaitlistSpreadsheet() or createSyntrixSignupsWorkbook() once.');
-  }
+function createEnterpriseSpreadsheet() {
+  var ss = SpreadsheetApp.create('Syntrix — enterprise signups');
+  PropertiesService.getScriptProperties().setProperty(PROP_ENTERPRISE, ss.getId());
+  var sh = ss.getSheets()[0];
+  sh.setName(SHEET_ENTERPRISE);
+  sh.getRange(1, 1, 1, ENTERPRISE_HEADERS.length).setValues([ENTERPRISE_HEADERS]);
+  Logger.log('ENTERPRISE spreadsheet: ' + ss.getUrl());
+}
+
+function openConsumerSpreadsheet() {
+  var id = PropertiesService.getScriptProperties().getProperty(PROP_CONSUMER);
+  if (!id) throw new Error('Run createConsumerSpreadsheet() first.');
   return SpreadsheetApp.openById(id);
 }
 
-/**
- * Old layouts had column C = "Full name" only. Insert two columns so C/D = First/Last, E = Full name.
- * Safe to call every POST; no-op if headers are already new.
- */
-function upgradeLegacySignupsLayoutIfNeeded(sh) {
-  var c1 = String(sh.getRange(1, 3).getValue()).trim();
-  var d1 = String(sh.getRange(1, 4).getValue()).trim();
-  if (c1 === 'Full name' && d1 !== 'Last name') {
-    sh.insertColumnsBefore(3, 2);
-    sh.getRange(1, 3, 1, 5).setValues([['First name', 'Last name', 'Full name']]);
+function openEnterpriseSpreadsheet() {
+  var id = PropertiesService.getScriptProperties().getProperty(PROP_ENTERPRISE);
+  if (!id) throw new Error('Run createEnterpriseSpreadsheet() first.');
+  return SpreadsheetApp.openById(id);
+}
+
+function appendConsumerRow(data) {
+  var ss = openConsumerSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_CONSUMER);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_CONSUMER);
+    sh.getRange(1, 1, 1, CONSUMER_HEADERS.length).setValues([CONSUMER_HEADERS]);
   }
+  var ts = new Date();
+  var iso = String(data.ts || '');
+  sh.appendRow([
+    ts,
+    String(data.email || ''),
+    String(data.first_name || ''),
+    String(data.last_name || ''),
+    String(data.referral_source || ''),
+    String(data.source || ''),
+    String(data.type || ''),
+    iso,
+  ]);
+  return ts;
+}
+
+function appendEnterpriseRow(data) {
+  var ss = openEnterpriseSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_ENTERPRISE);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_ENTERPRISE);
+    sh.getRange(1, 1, 1, ENTERPRISE_HEADERS.length).setValues([ENTERPRISE_HEADERS]);
+  }
+  var ts = new Date();
+  var iso = String(data.ts || '');
+  sh.appendRow([
+    ts,
+    String(data.business_name || ''),
+    String(data.business_address || ''),
+    String(data.referral_source || ''),
+    String(data.supervisor_name || ''),
+    String(data.employee_first_name || ''),
+    String(data.employee_last_name || ''),
+    String(data.email || data.company_email || ''),
+    String(data.phone || ''),
+    String(data.referral_source_secondary || ''),
+    String(data.source || ''),
+    String(data.type || ''),
+    iso,
+  ]);
+  return ts;
+}
+
+function notifyEmail(subject, body) {
+  var subj = subject != null && String(subject).trim() !== '' ? String(subject) : '(Syntrix notify)';
+  var txt = body != null ? String(body) : '';
+  MailApp.sendEmail({
+    to: NOTIFY_EMAIL,
+    subject: subj,
+    body: txt,
+  });
 }
 
 function doPost(e) {
+  if (!e || !e.postData || e.postData.contents == null || e.postData.contents === '') {
+    return jsonOut({
+      ok: false,
+      error: 'no_http_post',
+      hint:
+        'doPost is only called when Netlify POSTs to the web app URL. From the editor, run createConsumerSpreadsheet / testMailFromEditor instead.',
+    });
+  }
   var data;
   try {
     data = JSON.parse(e.postData.contents);
@@ -98,81 +165,97 @@ function doPost(e) {
     return jsonOut({ ok: false, error: 'unauthorized' });
   }
 
-  var email = String(data.email || '').trim();
-  if (!email) {
-    return jsonOut({ ok: false, error: 'no_email' });
-  }
-
-  var ss = getSpreadsheet();
-  var sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) {
-    sh = ss.insertSheet(SHEET_NAME);
-    sh.getRange(1, 1, 1, SIGNUPS_HEADERS.length).setValues([SIGNUPS_HEADERS]);
-  } else {
-    upgradeLegacySignupsLayoutIfNeeded(sh);
-  }
-
-  var ts = new Date();
-  var first = String(data.first_name || '').trim();
-  var last = String(data.last_name || '').trim();
-  var full = String(data.name || '').trim();
-  if (!full && (first || last)) {
-    full = (first + ' ' + last).trim();
-  }
-  var phone = String(data.phone || '');
-  var addr = String(data.business_address || '');
-  var referral = String(data.referral_source || '');
-  var src = String(data.source || '');
   var typ = String(data.type || '');
-  var iso = String(data.ts || '');
-
-  sh.appendRow([ts, email, first, last, full, phone, addr, referral, src, typ, iso]);
-
-  MailApp.sendEmail({
-    to: NOTIFY_EMAIL,
-    subject: '[Syntrix signup] ' + email,
-    body:
-      'New signup / waitlist entry\n\n' +
-      'Email: ' +
-      email +
-      '\n' +
-      'First name: ' +
-      first +
-      '\n' +
-      'Last name: ' +
-      last +
-      '\n' +
-      'Full name: ' +
-      (full || '(none)') +
-      '\n' +
-      'Phone: ' +
-      phone +
-      '\n' +
-      'Business address: ' +
-      addr +
-      '\n' +
-      'Referral: ' +
-      referral +
-      '\n' +
-      'Source: ' +
-      src +
-      '\n' +
-      'Type: ' +
-      typ +
-      '\n' +
-      'Submitted (ISO): ' +
-      iso +
-      '\n' +
-      'Received: ' +
-      ts.toISOString(),
-  });
+  try {
+    if (typ === 'enterprise_registration') {
+      var em = String(data.email || data.company_email || '').trim();
+      if (!em) return jsonOut({ ok: false, error: 'no_email' });
+      var tsE = appendEnterpriseRow(data);
+      notifyEmail(
+        '[Syntrix enterprise] ' + em,
+        formatEnterpriseEmail(data, tsE)
+      );
+    } else {
+      var emC = String(data.email || '').trim();
+      if (!emC) return jsonOut({ ok: false, error: 'no_email' });
+      var tsC = appendConsumerRow(data);
+      notifyEmail(
+        '[Syntrix signup] ' + emC,
+        formatConsumerEmail(data, tsC)
+      );
+    }
+  } catch (err) {
+    return jsonOut({ ok: false, error: 'sheet_error', message: String(err && err.message ? err.message : err) });
+  }
 
   return jsonOut({ ok: true });
 }
 
+function formatConsumerEmail(data, ts) {
+  return (
+    'Password / consumer signup row\n\n' +
+    'Email: ' +
+    String(data.email || '') +
+    '\n' +
+    'Name: ' +
+    String(data.first_name || '') +
+    ' ' +
+    String(data.last_name || '') +
+    '\n' +
+    'Referral: ' +
+    String(data.referral_source || '') +
+    '\n' +
+    'Type: ' +
+    String(data.type || '') +
+    '\n' +
+    'Submitted ISO: ' +
+    String(data.ts || '') +
+    '\n' +
+    'Received: ' +
+    ts.toISOString()
+  );
+}
+
+function formatEnterpriseEmail(data, ts) {
+  return (
+    'Enterprise signup row\n\n' +
+    'Company email: ' +
+    String(data.email || data.company_email || '') +
+    '\n' +
+    'Business: ' +
+    String(data.business_name || '') +
+    '\n' +
+    'Address: ' +
+    String(data.business_address || '') +
+    '\n' +
+    'Referral (org): ' +
+    String(data.referral_source || '') +
+    '\n' +
+    'Supervisor: ' +
+    String(data.supervisor_name || '') +
+    '\n' +
+    'Employee: ' +
+    String(data.employee_first_name || '') +
+    ' ' +
+    String(data.employee_last_name || '') +
+    '\n' +
+    'Phone: ' +
+    String(data.phone || '') +
+    '\n' +
+    'Referral (employee): ' +
+    String(data.referral_source_secondary || '') +
+    '\n' +
+    'Submitted ISO: ' +
+    String(data.ts || '') +
+    '\n' +
+    'Received: ' +
+    ts.toISOString()
+  );
+}
+
 function doGet(e) {
   return ContentService.createTextOutput(
-    'Syntrix waitlist webhook — POST JSON here. Run createNewWaitlistSpreadsheet() first.'
+    'Syntrix webhook — POST JSON. Run createConsumerSpreadsheet() and createEnterpriseSpreadsheet() once.'
   ).setMimeType(ContentService.MimeType.TEXT);
 }
 

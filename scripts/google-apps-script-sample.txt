@@ -1,5 +1,7 @@
 // OPTIONAL — container-bound Apps Script (paste only the block marked CODE into Apps Script).
-// For auto-created workbook see google-apps-script-standalone.txt
+// For password + enterprise sign-ups as TWO spreadsheets in Drive, use google-apps-script-standalone.txt
+// (createConsumerSpreadsheet + createEnterpriseSpreadsheet).
+// For auto-created single-sheet workbook see legacy flow below.
 //
 // 1) Open your Google Sheet → Extensions → Apps Script
 // 2) Paste CODE below, set NOTIFY_EMAIL / EXPECTED_SECRET

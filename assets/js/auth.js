@@ -127,11 +127,17 @@
     cachedProfile = null;
   }
 
-  async function registerWithPassword(email, password) {
+  async function registerWithPassword(email, password, firstName, lastName) {
+    const body = {
+      email,
+      password,
+      first_name: (firstName || '').trim(),
+      last_name: (lastName || '').trim(),
+    };
     const r = await fetch(apiBase() + '/api/auth/password/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(body),
     });
     const data = await r.json().catch(() => ({}));
     if (r.status === 404) {

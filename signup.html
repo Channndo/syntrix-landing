@@ -20,22 +20,32 @@
   </nav>
 
   <main class="auth-main">
-    <div class="auth-card">
+    <div class="auth-card auth-card--wide">
       <div class="auth-pill">
         <span class="auth-pill-dot"></span>
         Secure sign-up
       </div>
       <h1>Create your account</h1>
       <p class="auth-lede">
-        Start by choosing your email and password — you’ll use them to sign in and run scans. Optional fields below help us route early-access interest.
+        Create an email and password account for scans, or submit enterprise details below for team follow-up.
       </p>
 
       <div id="pw-signup-card">
         <p class="auth-section-title">Email &amp; password</p>
         <p class="auth-muted-small" style="margin-bottom:20px;">
-          Required on first visit: set the password you’ll use to sign in. At least <strong>12 characters</strong> with letters, numbers, and at least one symbol (e.g. <strong>! @ # $ % ^ &amp; *</strong>). Passwords are hashed with Argon2id; we never store plaintext.
+          Password: at least <strong>12 characters</strong> with letters, numbers, and at least one symbol. Stored with Argon2id — we never store plaintext passwords.
         </p>
         <form id="pw-signup-form" action="#" autocomplete="on">
+          <div class="auth-field-row">
+            <div class="auth-field">
+              <label for="pw-su-first">First name</label>
+              <input id="pw-su-first" type="text" required autocomplete="given-name" maxlength="100" placeholder="Jane" />
+            </div>
+            <div class="auth-field">
+              <label for="pw-su-last">Last name</label>
+              <input id="pw-su-last" type="text" required autocomplete="family-name" maxlength="100" placeholder="Doe" />
+            </div>
+          </div>
           <div class="auth-field">
             <label for="pw-su-email">Email</label>
             <input id="pw-su-email" type="email" required placeholder="you@company.com" autocomplete="email" maxlength="320" />
@@ -51,6 +61,23 @@
           <p id="pw-su-requirements" class="auth-muted-small" style="margin:0 0 16px;font-size:13px;line-height:1.45;">
             Requirements: 12+ characters · letters · numbers · one or more symbols (not spaces).
           </p>
+          <div class="auth-field">
+            <label for="pw-referral">How did you hear about us?</label>
+            <select id="pw-referral" required>
+              <option value="" disabled selected>Choose one…</option>
+              <option value="Search engine">Search engine</option>
+              <option value="Peer or colleague">Peer or colleague</option>
+              <option value="Conference or event">Conference or event</option>
+              <option value="Social media">Social media</option>
+              <option value="Podcast or webinar">Podcast or webinar</option>
+              <option value="News or article">News or article</option>
+              <option value="__other__">Other</option>
+            </select>
+          </div>
+          <div class="auth-field" id="pw-referral-other-wrap" hidden>
+            <label for="pw-referral-other">Tell us more <span style="opacity:0.6;font-weight:400;">(if Other)</span></label>
+            <input id="pw-referral-other" type="text" maxlength="200" placeholder="e.g. newsletter, community" />
+          </div>
           <button type="submit" id="pw-su-submit" class="auth-btn-primary">Create account</button>
         </form>
         <p id="pw-su-error" class="auth-feedback error" role="alert" style="display:none;margin-top:16px;"></p>
@@ -58,61 +85,94 @@
 
       <div class="auth-divider"></div>
 
-      <p class="auth-section-title">Optional — Early access</p>
+      <p class="auth-section-title">Enterprise sign-up</p>
       <p class="auth-muted-small">
-        Want us to follow up separately? Tell us more below. Required fields help us route your request; phone and address are optional.
+        For organizations: business details and the employee requesting access. Each column includes how you heard about us. Submissions are recorded separately from password accounts.
       </p>
 
-      <form id="waitlist-form" action="#" autocomplete="on">
-        <div class="auth-field">
-          <label for="waitlist-email">Work email</label>
-          <input id="waitlist-email" type="email" required placeholder="you@company.com" autocomplete="email" maxlength="320" />
-        </div>
-        <div class="auth-field-row">
-          <div class="auth-field">
-            <label for="waitlist-first-name">First name</label>
-            <input id="waitlist-first-name" type="text" required placeholder="Jane" autocomplete="given-name" maxlength="100" />
+      <form id="enterprise-form" action="#" autocomplete="on">
+        <div class="auth-enterprise-grid">
+          <div class="auth-enterprise-col">
+            <p class="auth-muted-small" style="margin-top:0;font-weight:600;color:var(--text-mid);">Organization</p>
+            <div class="auth-field">
+              <label for="ent-business-name">Business name</label>
+              <input id="ent-business-name" type="text" required maxlength="200" autocomplete="organization" />
+            </div>
+            <div class="auth-field">
+              <label for="ent-business-address">Business address</label>
+              <textarea id="ent-business-address" required maxlength="500" placeholder="Street, city, region, postal code" autocomplete="street-address"></textarea>
+            </div>
+            <div class="auth-field">
+              <label for="ent-referral-bus">How did you hear about us?</label>
+              <select id="ent-referral-bus" required>
+                <option value="" disabled selected>Choose one…</option>
+                <option value="Search engine">Search engine</option>
+                <option value="Peer or colleague">Peer or colleague</option>
+                <option value="Conference or event">Conference or event</option>
+                <option value="Social media">Social media</option>
+                <option value="Podcast or webinar">Podcast or webinar</option>
+                <option value="News or article">News or article</option>
+                <option value="__other__">Other</option>
+              </select>
+            </div>
+            <div class="auth-field" id="ent-ref-bus-other-wrap" hidden>
+              <label for="ent-ref-bus-other">Tell us more <span style="opacity:0.6;font-weight:400;">(if Other)</span></label>
+              <input id="ent-ref-bus-other" type="text" maxlength="200" />
+            </div>
           </div>
-          <div class="auth-field">
-            <label for="waitlist-last-name">Last name</label>
-            <input id="waitlist-last-name" type="text" required placeholder="Doe" autocomplete="family-name" maxlength="100" />
+          <div class="auth-enterprise-col">
+            <p class="auth-muted-small" style="margin-top:0;font-weight:600;color:var(--text-mid);">Employee</p>
+            <div class="auth-field">
+              <label for="ent-supervisor">Supervisor name</label>
+              <input id="ent-supervisor" type="text" required maxlength="200" autocomplete="name" />
+            </div>
+            <div class="auth-field-row">
+              <div class="auth-field">
+                <label for="ent-emp-first">Employee first name</label>
+                <input id="ent-emp-first" type="text" required maxlength="100" autocomplete="given-name" />
+              </div>
+              <div class="auth-field">
+                <label for="ent-emp-last">Employee last name</label>
+                <input id="ent-emp-last" type="text" required maxlength="100" autocomplete="family-name" />
+              </div>
+            </div>
+            <div class="auth-field">
+              <label for="ent-company-email">Company email</label>
+              <input id="ent-company-email" type="email" required maxlength="320" autocomplete="email" />
+            </div>
+            <div class="auth-field">
+              <label for="ent-phone">Phone number</label>
+              <input id="ent-phone" type="tel" required maxlength="40" autocomplete="tel" />
+            </div>
+            <div class="auth-field">
+              <label for="ent-referral-emp">How did you hear about us?</label>
+              <select id="ent-referral-emp" required>
+                <option value="" disabled selected>Choose one…</option>
+                <option value="Search engine">Search engine</option>
+                <option value="Peer or colleague">Peer or colleague</option>
+                <option value="Conference or event">Conference or event</option>
+                <option value="Social media">Social media</option>
+                <option value="Podcast or webinar">Podcast or webinar</option>
+                <option value="News or article">News or article</option>
+                <option value="__other__">Other</option>
+              </select>
+            </div>
+            <div class="auth-field" id="ent-ref-emp-other-wrap" hidden>
+              <label for="ent-ref-emp-other">Tell us more <span style="opacity:0.6;font-weight:400;">(if Other)</span></label>
+              <input id="ent-ref-emp-other" type="text" maxlength="200" />
+            </div>
           </div>
         </div>
-        <div class="auth-field">
-          <label for="waitlist-phone">Phone <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
-          <input id="waitlist-phone" type="tel" placeholder="+1 …" autocomplete="tel" maxlength="40" />
-        </div>
-        <div class="auth-field">
-          <label for="waitlist-address">Business address <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
-          <textarea id="waitlist-address" placeholder="Company, street, city, region, postal code" autocomplete="street-address" maxlength="500"></textarea>
-        </div>
-        <div class="auth-field">
-          <label for="waitlist-referral">How did you hear about us?</label>
-          <select id="waitlist-referral" required>
-            <option value="" disabled selected>Choose one…</option>
-            <option value="Search engine">Search engine</option>
-            <option value="Peer or colleague">Peer or colleague</option>
-            <option value="Conference or event">Conference or event</option>
-            <option value="Social media">Social media</option>
-            <option value="Podcast or webinar">Podcast or webinar</option>
-            <option value="News or article">News or article</option>
-            <option value="__other__">Other</option>
-          </select>
-        </div>
-        <div class="auth-field" id="referral-other-wrap" hidden>
-          <label for="waitlist-referral-other">Tell us more <span style="opacity:0.6;font-weight:400;">(if Other)</span></label>
-          <input id="waitlist-referral-other" type="text" maxlength="200" placeholder="e.g. newsletter name, community, link" />
-        </div>
-        <button type="submit" id="waitlist-submit" class="auth-btn-secondary">Submit registration</button>
+        <button type="submit" id="ent-submit" class="auth-btn-secondary">Submit enterprise sign-up</button>
       </form>
-      <p id="waitlist-feedback-success" class="auth-feedback success" role="status" aria-live="polite"></p>
-      <p id="waitlist-feedback-error" class="auth-feedback error" role="alert"></p>
+      <p id="ent-feedback-success" class="auth-feedback success" role="status" aria-live="polite"></p>
+      <p id="ent-feedback-error" class="auth-feedback error" role="alert"></p>
 
       <div class="auth-divider"></div>
 
       <p class="auth-section-title">Enterprise SSO</p>
       <p class="auth-muted-small" style="margin-bottom:20px;">
-        Only if your team connected Auth0 or another IdP here — otherwise use email &amp; password above.
+        Only if your team connected Auth0 — otherwise use email &amp; password above.
       </p>
 
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
@@ -128,9 +188,8 @@
       <details class="auth-details">
         <summary>Technical setup (operators)</summary>
         <p style="margin:12px 0 0;">
-          <strong>Security:</strong> Webhook URLs, deployment tokens, and API secrets belong only in <strong>Netlify / Render environment variables</strong> (server-side). Do not commit them to git or put them in HTML, JS, or CSS served to visitors — the browser never needs your Apps Script or ingest URL.<br/><br/>
-          <strong>Waitlist delivery</strong> is configured in <strong>netlify/functions/signup-notify.mjs</strong> (scanner ingest, webhook, email, or legacy script). After changing env vars, trigger a production deploy.<br/><br/>
-          <strong>Password sign-up</strong> requires <strong>SYNTRIX_PASSWORD_AUTH=true</strong> on the scanner and a matching Netlify build (<code>npm run build</code> writes <code>auth-config.js</code>). Set <strong>SYNTRIX_PASSWORD_AUTH=false</strong> on Netlify only if you intentionally disable password UI.
+          <strong>Two Google Sheets:</strong> set <code>APPS_SCRIPT_CONSUMER_URL</code> (password sign-up rows) and <code>APPS_SCRIPT_ENTERPRISE_URL</code> (enterprise form) on Netlify. If only <code>APPS_SCRIPT_URL</code> is set, both types use that script — route by <code>type</code> in the standalone Apps Script.<br/><br/>
+          <strong>Secrets:</strong> keep webhook URLs and <code>APPS_SCRIPT_SECRET</code> in Netlify env only.
         </p>
       </details>
     </div>
@@ -142,78 +201,90 @@
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
   <script>
+    function referralValue(selectEl, otherInput) {
+      let v = selectEl.value;
+      if (v === '__other__') {
+        const extra = (otherInput && otherInput.value || '').trim();
+        v = extra ? 'Other: ' + extra : 'Other';
+      }
+      return v;
+    }
+
     (async () => {
       const ready = document.getElementById('auth-panel-ready');
       const btn = document.getElementById('signup-btn');
       const err = document.getElementById('auth-error');
-      const form = document.getElementById('waitlist-form');
-      const emailInput = document.getElementById('waitlist-email');
-      const firstNameInput = document.getElementById('waitlist-first-name');
-      const lastNameInput = document.getElementById('waitlist-last-name');
-      const phoneInput = document.getElementById('waitlist-phone');
-      const addressInput = document.getElementById('waitlist-address');
-      const referralSelect = document.getElementById('waitlist-referral');
-      const referralOtherWrap = document.getElementById('referral-other-wrap');
-      const referralOtherInput = document.getElementById('waitlist-referral-other');
-      const wlSubmit = document.getElementById('waitlist-submit');
 
-      referralSelect.addEventListener('change', () => {
-        referralOtherWrap.hidden = referralSelect.value !== '__other__';
+      document.getElementById('pw-referral').addEventListener('change', () => {
+        document.getElementById('pw-referral-other-wrap').hidden =
+          document.getElementById('pw-referral').value !== '__other__';
       });
-      const okFb = document.getElementById('waitlist-feedback-success');
-      const errFb = document.getElementById('waitlist-feedback-error');
+      document.getElementById('ent-referral-bus').addEventListener('change', () => {
+        document.getElementById('ent-ref-bus-other-wrap').hidden =
+          document.getElementById('ent-referral-bus').value !== '__other__';
+      });
+      document.getElementById('ent-referral-emp').addEventListener('change', () => {
+        document.getElementById('ent-ref-emp-other-wrap').hidden =
+          document.getElementById('ent-referral-emp').value !== '__other__';
+      });
 
-      form.addEventListener('submit', async (e) => {
+      const entForm = document.getElementById('enterprise-form');
+      const entOk = document.getElementById('ent-feedback-success');
+      const entErr = document.getElementById('ent-feedback-error');
+      const entSubmit = document.getElementById('ent-submit');
+
+      entForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        okFb.textContent = '';
-        errFb.textContent = '';
-        okFb.classList.remove('success');
-        errFb.classList.remove('error');
-        wlSubmit.disabled = true;
-
+        entOk.textContent = '';
+        entErr.textContent = '';
+        entOk.classList.remove('success');
+        entErr.classList.remove('error');
+        entSubmit.disabled = true;
         try {
-          let referral = referralSelect.value;
-          if (referral === '__other__') {
-            const extra = (referralOtherInput.value || '').trim();
-            referral = extra ? 'Other: ' + extra : 'Other';
-          }
-          const first = firstNameInput.value.trim();
-          const last = lastNameInput.value.trim();
-          await window.SyntrixWaitlist.submitWaitlist({
-            email: emailInput.value.trim(),
-            first_name: first,
-            last_name: last,
-            name: [first, last].filter(Boolean).join(' '),
-            phone: phoneInput.value.trim(),
-            business_address: addressInput.value.trim(),
-            referral_source: referral,
+          const companyEmail = document.getElementById('ent-company-email').value.trim();
+          const ef = document.getElementById('ent-emp-first').value.trim();
+          const el = document.getElementById('ent-emp-last').value.trim();
+          await window.SyntrixWaitlist.submitSignupLead({
+            email: companyEmail,
+            company_email: companyEmail,
+            business_name: document.getElementById('ent-business-name').value.trim(),
+            business_address: document.getElementById('ent-business-address').value.trim(),
+            supervisor_name: document.getElementById('ent-supervisor').value.trim(),
+            employee_first_name: ef,
+            employee_last_name: el,
+            phone: document.getElementById('ent-phone').value.trim(),
+            referral_source: referralValue(
+              document.getElementById('ent-referral-bus'),
+              document.getElementById('ent-ref-bus-other')
+            ),
+            referral_source_secondary: referralValue(
+              document.getElementById('ent-referral-emp'),
+              document.getElementById('ent-ref-emp-other')
+            ),
             source: 'signup_page',
-            type: 'early_access_sheet',
+            type: 'enterprise_registration',
           });
-          okFb.textContent =
-            "Thanks — your registration was received. We'll follow up at the email you provided.";
-          okFb.classList.add('success');
+          entOk.textContent =
+            'Thanks — your enterprise sign-up was received. We will follow up at the company email provided.';
+          entOk.classList.add('success');
+          entForm.reset();
         } catch (werr) {
           const code = werr.code || '';
           if (code === 'waitlist_not_configured') {
-            errFb.textContent =
-              'Registration could not be saved right now. Please try again in a moment or contact hello@syntrix.solutions.';
+            entErr.textContent =
+              'Sign-up could not be saved right now. Try again shortly or contact hello@syntrix.solutions.';
           } else if (code === 'rate_limited') {
-            errFb.textContent =
-              'Too many attempts from this browser. Please wait a few minutes and try again.';
-          } else if (code === 'payload_too_large') {
-            errFb.textContent = 'That submission was too large. Shorten the address field and try again.';
+            entErr.textContent = 'Too many attempts. Please wait a few minutes.';
           } else if (code === 'delivery_failed') {
-            errFb.textContent =
-              'We could not confirm your registration with our systems. Please try again or email hello@syntrix.solutions.';
+            entErr.textContent =
+              'We could not confirm with our systems. Try again or email hello@syntrix.solutions.';
           } else {
-            errFb.textContent =
-              (werr && werr.message) ||
-              'Could not save right now — try again or email hello@syntrix.solutions.';
+            entErr.textContent =
+              (werr && werr.message) || 'Something went wrong — try again or email hello@syntrix.solutions.';
           }
-          errFb.classList.add('error');
+          entErr.classList.add('error');
         } finally {
-          wlSubmit.disabled = false;
+          entSubmit.disabled = false;
         }
       });
 
@@ -243,11 +314,28 @@
             pwErr.style.display = 'block';
             return;
           }
+          const first = document.getElementById('pw-su-first').value.trim();
+          const last = document.getElementById('pw-su-last').value.trim();
+          const email = document.getElementById('pw-su-email').value.trim();
           try {
-            await window.SyntrixAuth.registerWithPassword(
-              document.getElementById('pw-su-email').value.trim(),
-              p1
-            );
+            await window.SyntrixAuth.registerWithPassword(email, p1, first, last);
+            try {
+              await window.SyntrixWaitlist.submitSignupLead({
+                email,
+                company_email: email,
+                first_name: first,
+                last_name: last,
+                name: [first, last].filter(Boolean).join(' '),
+                referral_source: referralValue(
+                  document.getElementById('pw-referral'),
+                  document.getElementById('pw-referral-other')
+                ),
+                source: 'signup_page',
+                type: 'password_signup_sheet',
+              });
+            } catch (notifyErr) {
+              console.warn('signup-notify', notifyErr);
+            }
             window.location.href = `${window.location.origin}/index.html`;
           } catch (ex) {
             pwErr.textContent = ex.message || String(ex);

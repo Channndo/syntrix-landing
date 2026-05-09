@@ -1,24 +1,31 @@
 /**
- * Submit waitlist / signup interest to the Netlify function `signup-notify` (server-side delivery only).
+ * Submit signup leads to the Netlify function `signup-notify` (server-side delivery only).
  */
 (function () {
-  async function submitWaitlist(fields) {
+  async function submitSignupLead(fields) {
     const endpoint =
       `${window.location.origin}/.netlify/functions/signup-notify`;
+    const payload = {
+      email: fields.email || '',
+      company_email: fields.company_email || '',
+      first_name: fields.first_name || '',
+      last_name: fields.last_name || '',
+      name: fields.name || '',
+      phone: fields.phone || '',
+      business_name: fields.business_name || '',
+      business_address: fields.business_address || '',
+      supervisor_name: fields.supervisor_name || '',
+      employee_first_name: fields.employee_first_name || '',
+      employee_last_name: fields.employee_last_name || '',
+      referral_source: fields.referral_source || '',
+      referral_source_secondary: fields.referral_source_secondary || '',
+      source: fields.source || 'signup_page',
+      type: fields.type || 'waitlist',
+    };
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: fields.email,
-        first_name: fields.first_name || '',
-        last_name: fields.last_name || '',
-        name: fields.name || '',
-        phone: fields.phone || '',
-        business_address: fields.business_address || '',
-        referral_source: fields.referral_source || '',
-        source: fields.source || 'signup_page',
-        type: fields.type || 'waitlist',
-      }),
+      body: JSON.stringify(payload),
     });
     let data = {};
     try {
@@ -35,5 +42,10 @@
     return data;
   }
 
-  window.SyntrixWaitlist = { submitWaitlist };
+  /** @deprecated use submitSignupLead */
+  async function submitWaitlist(fields) {
+    return submitSignupLead(fields);
+  }
+
+  window.SyntrixWaitlist = { submitSignupLead, submitWaitlist };
 })();

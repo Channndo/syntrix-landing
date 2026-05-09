@@ -1,6 +1,7 @@
 # Build injects assets/js/auth-config.js from env: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE, SYNTRIX_API_BASE
 # Option B — edit assets/js/auth-overlay.js in git (SPA domain + client ID are public)
-# Waitlist: configure netlify/functions/signup-notify.mjs via Netlify env (see file header). Secrets never belong in git.
+# Waitlist / signup: signup-notify.mjs — optional APPS_SCRIPT_CONSUMER_URL + APPS_SCRIPT_ENTERPRISE_URL (two Sheets).
+# Secrets never belong in git.
 [build]
   command = "npm run build"
   publish = "."

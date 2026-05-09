@@ -1,7 +1,10 @@
 /**
- * Receives signup / waitlist POSTs from the landing site.
+ * Receives signup POSTs from the landing site.
  *
- * Delivery paths: scanner ingest, webhook, Resend, Apps Script — see env vars in repo README / netlify.toml.
+ * Apps Script: optional split deployments —
+ *   APPS_SCRIPT_CONSUMER_URL — password / consumer signups (type password_signup_sheet)
+ *   APPS_SCRIPT_ENTERPRISE_URL — enterprise form (type enterprise_registration)
+ *   APPS_SCRIPT_URL — legacy fallback for either type when the specific URL is unset
  */
 
 const ALLOW_ORIGIN = process.env.SYNTRIX_ORIGIN || "*";
@@ -23,6 +26,12 @@ const APPS_SCRIPT_URL_RAW = (
   process.env.APPS_SCRIPT_DEPLOYMENT_ID ||
   ""
 ).trim();
+const APPS_SCRIPT_CONSUMER_URL_RAW = (
+  process.env.APPS_SCRIPT_CONSUMER_URL || ""
+).trim();
+const APPS_SCRIPT_ENTERPRISE_URL_RAW = (
+  process.env.APPS_SCRIPT_ENTERPRISE_URL || ""
+).trim();
 const APPS_SCRIPT_SECRET = (process.env.APPS_SCRIPT_SECRET || "").trim();
 
 /** Max JSON body size (bytes) — rejects oversized POSTs. */
@@ -43,6 +52,12 @@ function resolveAppsScriptEndpoint(raw) {
 }
 
 const APPS_SCRIPT_URL = resolveAppsScriptEndpoint(APPS_SCRIPT_URL_RAW);
+const APPS_SCRIPT_CONSUMER_URL = resolveAppsScriptEndpoint(
+  APPS_SCRIPT_CONSUMER_URL_RAW
+);
+const APPS_SCRIPT_ENTERPRISE_URL = resolveAppsScriptEndpoint(
+  APPS_SCRIPT_ENTERPRISE_URL_RAW
+);
 
 function clientIp(event) {
   const xf =
@@ -94,11 +109,52 @@ function deliveryMode() {
     return "scanner_ingest";
   if (SIGNUP_WEBHOOK_URL) return "webhook";
   if (RESEND_API_KEY && SIGNUP_NOTIFY_TO && RESEND_FROM) return "resend";
-  if (APPS_SCRIPT_URL) return "apps_script";
+  if (
+    APPS_SCRIPT_URL ||
+    APPS_SCRIPT_CONSUMER_URL ||
+    APPS_SCRIPT_ENTERPRISE_URL
+  )
+    return "apps_script";
   return null;
 }
 
+/** Pick Apps Script deployment URL from signup type (two spreadsheets). */
+function appsScriptUrlForPayload(entryType) {
+  const t = entryType || "";
+  if (t === "enterprise_registration") {
+    return APPS_SCRIPT_ENTERPRISE_URL || APPS_SCRIPT_URL;
+  }
+  if (
+    t === "password_signup_sheet" ||
+    t === "early_access_sheet" ||
+    t === "waitlist"
+  ) {
+    return APPS_SCRIPT_CONSUMER_URL || APPS_SCRIPT_URL;
+  }
+  return (
+    APPS_SCRIPT_URL || APPS_SCRIPT_CONSUMER_URL || APPS_SCRIPT_ENTERPRISE_URL
+  );
+}
+
 function signupTextBody(payload) {
+  if (payload.type === "enterprise_registration") {
+    return [
+      "New Syntrix enterprise signup",
+      "",
+      `Company email: ${payload.email}`,
+      `Business name: ${payload.business_name || "(none)"}`,
+      `Business address: ${payload.business_address || "(none)"}`,
+      `How they heard (business side): ${payload.referral_source || "(none)"}`,
+      `Supervisor name: ${payload.supervisor_name || "(none)"}`,
+      `Employee first name: ${payload.employee_first_name || "(none)"}`,
+      `Employee last name: ${payload.employee_last_name || "(none)"}`,
+      `Phone: ${payload.phone || "(none)"}`,
+      `How they heard (employee side): ${payload.referral_source_secondary || "(none)"}`,
+      `Source: ${payload.source || ""}`,
+      `Type: ${payload.type || ""}`,
+      `Time: ${payload.ts}`,
+    ].join("\n");
+  }
   const fn = payload.first_name || "";
   const ln = payload.last_name || "";
   const combined =
@@ -106,7 +162,7 @@ function signupTextBody(payload) {
     [fn, ln].filter(Boolean).join(" ").trim() ||
     "(none)";
   return [
-    "New Syntrix signup / waitlist entry",
+    "New Syntrix signup entry",
     "",
     `Email: ${payload.email}`,
     `First name: ${fn || "(none)"}`,
@@ -121,9 +177,6 @@ function signupTextBody(payload) {
   ].join("\n");
 }
 
-/**
- * Many backends return HTTP 200 with JSON { ok: false } (e.g. Apps Script). Treat as failure.
- */
 function jsonIndicatesFailure(data) {
   return data && typeof data === "object" && data.ok === false;
 }
@@ -218,11 +271,16 @@ async function deliverResend(payload) {
 }
 
 async function deliverAppsScript(payload) {
+  const url = appsScriptUrlForPayload(payload.type);
+  if (!url) {
+    console.error("Apps Script URL missing for type", payload.type);
+    return { ok: false };
+  }
   const body = {
     ...(APPS_SCRIPT_SECRET ? { secret: APPS_SCRIPT_SECRET } : {}),
     ...payload,
   };
-  const res = await fetch(APPS_SCRIPT_URL, {
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     redirect: "follow",
@@ -307,14 +365,27 @@ export const handler = async (event) => {
     };
   }
 
-  const email = String(body.email || "").trim().slice(0, 320);
-  if (!email || !isValidEmail(email)) {
+  const entryType = body.type ? String(body.type).slice(0, 80) : "waitlist";
+  const isEnterprise = entryType === "enterprise_registration";
+
+  let primaryEmail = String(body.email || "").trim().slice(0, 320);
+  if (isEnterprise) {
+    primaryEmail = String(body.company_email || body.email || "")
+      .trim()
+      .slice(0, 320);
+  }
+
+  if (!primaryEmail || !isValidEmail(primaryEmail)) {
     return {
       statusCode: 400,
       headers: headers(),
       body: JSON.stringify({ ok: false, error: "invalid_email" }),
     };
   }
+
+  const company_email = isEnterprise
+    ? primaryEmail
+    : String(body.company_email || "").trim().slice(0, 320);
 
   const first_name = body.first_name
     ? String(body.first_name).trim().slice(0, 100)
@@ -330,22 +401,42 @@ export const handler = async (event) => {
   const business_address = body.business_address
     ? String(body.business_address).trim().slice(0, 500)
     : "";
+  const business_name = body.business_name
+    ? String(body.business_name).trim().slice(0, 200)
+    : "";
+  const supervisor_name = body.supervisor_name
+    ? String(body.supervisor_name).trim().slice(0, 200)
+    : "";
+  const employee_first_name = body.employee_first_name
+    ? String(body.employee_first_name).trim().slice(0, 100)
+    : "";
+  const employee_last_name = body.employee_last_name
+    ? String(body.employee_last_name).trim().slice(0, 100)
+    : "";
   const referral_source = body.referral_source
     ? String(body.referral_source).trim().slice(0, 200)
     : "";
+  const referral_source_secondary = body.referral_source_secondary
+    ? String(body.referral_source_secondary).trim().slice(0, 200)
+    : "";
   const source = body.source ? String(body.source).slice(0, 120) : "signup_page";
-  const type = body.type ? String(body.type).slice(0, 80) : "waitlist";
 
   const payload = {
-    email,
+    email: primaryEmail,
+    company_email,
     first_name,
     last_name,
     name,
     phone,
+    business_name,
     business_address,
+    supervisor_name,
+    employee_first_name,
+    employee_last_name,
     referral_source,
+    referral_source_secondary,
     source,
-    type,
+    type: entryType,
     ts: new Date().toISOString(),
   };
 
