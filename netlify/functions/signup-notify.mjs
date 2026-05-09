@@ -1,18 +1,22 @@
 /**
- * Receives signup / waitlist POSTs from the landing site and delivers them without
- * requiring Google Apps Script.
+ * Receives signup / waitlist POSTs from the landing site.
  *
- * Configure ONE delivery path (first match wins):
+ * First matching delivery wins:
  *
- * 1) Webhook — set SIGNUP_WEBHOOK_URL (+ optional SIGNUP_WEBHOOK_SECRET header value)
- * 2) Email via Resend — RESEND_API_KEY, SIGNUP_NOTIFY_TO, RESEND_FROM
- * 3) Legacy — APPS_SCRIPT_URL (+ optional APPS_SCRIPT_SECRET in JSON body)
- *
- * Netlify → Site settings → Environment variables.
- * Optional: SYNTRIX_ORIGIN for CORS (default *).
+ * 0) Scanner API (SQLite waitlist_leads — no Google/Resend)
+ *    WAITLIST_SCANNER_INGEST_URL  e.g. https://YOUR_API/api/public/waitlist
+ *    WAITLIST_INGEST_SECRET       Bearer token — must equal scanner SYNTRIX_WAITLIST_INGEST_SECRET
+ * 1) Webhook — SIGNUP_WEBHOOK_URL (+ optional SIGNUP_WEBHOOK_SECRET)
+ * 2) Email — RESEND_* trio
+ * 3) Legacy — APPS_SCRIPT_URL
  */
 
 const ALLOW_ORIGIN = process.env.SYNTRIX_ORIGIN || "*";
+
+const WAITLIST_SCANNER_INGEST_URL = (
+  process.env.WAITLIST_SCANNER_INGEST_URL || ""
+).trim();
+const WAITLIST_INGEST_SECRET = (process.env.WAITLIST_INGEST_SECRET || "").trim();
 
 const SIGNUP_WEBHOOK_URL = (process.env.SIGNUP_WEBHOOK_URL || "").trim();
 const SIGNUP_WEBHOOK_SECRET = (process.env.SIGNUP_WEBHOOK_SECRET || "").trim();
@@ -39,6 +43,8 @@ function isValidEmail(s) {
 }
 
 function deliveryMode() {
+  if (WAITLIST_SCANNER_INGEST_URL && WAITLIST_INGEST_SECRET)
+    return "scanner_ingest";
   if (SIGNUP_WEBHOOK_URL) return "webhook";
   if (RESEND_API_KEY && SIGNUP_NOTIFY_TO && RESEND_FROM) return "resend";
   if (APPS_SCRIPT_URL) return "apps_script";
@@ -57,6 +63,24 @@ function signupTextBody(payload) {
   ].join("\n");
 }
 
+async function deliverScanner(payload) {
+  const res = await fetch(WAITLIST_SCANNER_INGEST_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${WAITLIST_INGEST_SECRET}`,
+    },
+    redirect: "follow",
+    body: JSON.stringify(payload),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    console.error("Scanner waitlist ingest", res.status, text);
+    return { ok: false };
+  }
+  return { ok: true };
+}
+
 async function deliverWebhook(payload) {
   const h = { "Content-Type": "application/json" };
   if (SIGNUP_WEBHOOK_SECRET) {
@@ -68,11 +92,8 @@ async function deliverWebhook(payload) {
     redirect: "follow",
     body: JSON.stringify(payload),
   });
-  const text = await res.text();
-  if (!res.ok) {
-    console.error("Webhook response", res.status, text);
-    return { ok: false };
-  }
+  await res.text();
+  if (!res.ok) return { ok: false };
   return { ok: true };
 }
 
@@ -93,11 +114,8 @@ async function deliverResend(payload) {
       text: signupTextBody(payload),
     }),
   });
-  const text = await res.text();
-  if (!res.ok) {
-    console.error("Resend response", res.status, text);
-    return { ok: false };
-  }
+  await res.text();
+  if (!res.ok) return { ok: false };
   return { ok: true };
 }
 
@@ -112,11 +130,8 @@ async function deliverAppsScript(payload) {
     redirect: "follow",
     body: JSON.stringify(body),
   });
-  const text = await res.text();
-  if (!res.ok) {
-    console.error("Apps Script response", res.status, text);
-    return { ok: false };
-  }
+  await res.text();
+  if (!res.ok) return { ok: false };
   return { ok: true };
 }
 
@@ -142,7 +157,8 @@ export const handler = async (event) => {
         ok: false,
         error: "waitlist_not_configured",
         message:
-          "Set SIGNUP_WEBHOOK_URL, or Resend (RESEND_API_KEY + SIGNUP_NOTIFY_TO + RESEND_FROM), or legacy APPS_SCRIPT_URL.",
+          "Configure WAITLIST_SCANNER_INGEST_URL + WAITLIST_INGEST_SECRET on Netlify " +
+          "(matches scanner SYNTRIX_WAITLIST_INGEST_SECRET), or SIGNUP_WEBHOOK_URL / Resend / APPS_SCRIPT_URL.",
       }),
     };
   }
@@ -158,9 +174,7 @@ export const handler = async (event) => {
     };
   }
 
-  const email = String(body.email || "")
-    .trim()
-    .slice(0, 320);
+  const email = String(body.email || "").trim().slice(0, 320);
   if (!email || !isValidEmail(email)) {
     return {
       statusCode: 400,
@@ -183,7 +197,9 @@ export const handler = async (event) => {
 
   try {
     let ok = false;
-    if (mode === "webhook") {
+    if (mode === "scanner_ingest") {
+      ok = (await deliverScanner(payload)).ok;
+    } else if (mode === "webhook") {
       ok = (await deliverWebhook(payload)).ok;
     } else if (mode === "resend") {
       ok = (await deliverResend(payload)).ok;

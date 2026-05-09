@@ -81,14 +81,15 @@
       <details class="auth-details">
         <summary>Technical setup (operators)</summary>
         <p style="margin:12px 0 0;">
-          <strong>Waitlist</strong> (form above): <strong>SIGNUP_WEBHOOK_URL</strong> (+ optional <strong>SIGNUP_WEBHOOK_SECRET</strong>), or Resend (<strong>RESEND_API_KEY</strong>, <strong>SIGNUP_NOTIFY_TO</strong>, <strong>RESEND_FROM</strong>), or legacy <strong>APPS_SCRIPT_URL</strong> — see <strong>netlify/functions/signup-notify.mjs</strong>. Redeploy after env changes.<br/><br/>
-          <strong>Accounts &amp; scans</strong>: Netlify build env <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, <strong>AUTH0_AUDIENCE</strong> (must match your API identifier). Optional <strong>SYNTRIX_API_BASE</strong> defaults to api.syntrix.solutions.<br/>
-          In your identity provider (SPA app): allow callbacks + logout URLs +
-          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>; allowed web origins include
-          <span style="word-break:break-all;">https://syntrix.solutions</span>; enable RBAC/API if needed for JWT audience.<br/>
-          Scanner (Render API): set <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_AUDIENCE</strong> (same identifier), optional <strong>AUTH0_ISSUER</strong> if JWT <code>iss</code> does not match https://YOUR_DOMAIN/<br/>
-          Until Stripe checkout is wired, set <strong>SYNTRIX_BILLING_REQUIRED=false</strong> on the scanner so authenticated users can run scans.<br/><br/>
-          Or commit values in <strong>assets/js/auth-overlay.js</strong> for local/overrides after <strong>auth-config.js</strong>.
+          <strong>Waitlist form (recommended — no Google)</strong><br/>
+          1. On Render (scanner): <strong>SYNTRIX_WAITLIST_INGEST_SECRET</strong> — long random string (e.g. <code>openssl rand -hex 32</code>).<br/>
+          2. On Netlify: <strong>WAITLIST_SCANNER_INGEST_URL</strong> = your API + <strong>/api/public/waitlist</strong> &nbsp;e.g.&nbsp;<span style="word-break:break-all;">https://api.syntrix.solutions/api/public/waitlist</span><br/>
+          3. On Netlify: <strong>WAITLIST_INGEST_SECRET</strong> = <em>exact same string</em> as step 1 (sent as Bearer from the Netlify function). Redeploy Netlify.<br/>
+          Fallbacks: webhook / Resend / Apps Script — see <strong>netlify/functions/signup-notify.mjs</strong>.<br/><br/>
+          <strong>Live scans require sign-in JWT</strong> (separate from the waitlist row): Netlify build <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, <strong>AUTH0_AUDIENCE</strong>; Scanner <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_AUDIENCE</strong>. Callback
+          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>. Until Stripe works: <strong>SYNTRIX_BILLING_REQUIRED=false</strong>.
+          Temporary last resort only: <strong>SYNTRIX_AUTH_REQUIRED=false</strong> exposes scans without login — do not leave on public production.<br/><br/>
+          Optional <strong>SYNTRIX_API_BASE</strong> in Netlify build; or <strong>assets/js/auth-overlay.js</strong> after <strong>auth-config.js</strong>.
         </p>
       </details>
     </div>
