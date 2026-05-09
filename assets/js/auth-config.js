@@ -4,3 +4,5 @@ window.SYNTRIX_API_BASE = "https://api.syntrix.solutions";
 window.SYNTRIX_AUTH0_DOMAIN = "";
 window.SYNTRIX_AUTH0_CLIENT_ID = "";
 window.SYNTRIX_AUTH0_AUDIENCE = "";
+window.SYNTRIX_PASSWORD_AUTH = true;
+window.SYNTRIX_GUEST_SCANS = true;

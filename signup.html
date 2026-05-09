@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Create account · Syntrix</title>
-  <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
 </head>
 <body class="auth-page">
@@ -13,7 +13,7 @@
 
   <nav class="auth-nav">
     <a class="brand-auth" href="index.html">
-      <img src="assets/syntrix-logo-solid.png" alt="" width="40" height="40" />
+      <img src="assets/syntrix-logo-solid.png" alt="" />
       SYNTRIX
     </a>
     <a class="link-muted" href="login.html">Already have an account?</a>
@@ -27,12 +27,40 @@
       </div>
       <h1>Create your account</h1>
       <p class="auth-lede">
-        Register for early access. We use what you submit only to confirm interest, qualify leads, and follow up about Syntrix. When secure sign-in is live here, you’ll finish account setup in one step.
+        Start by choosing your email and password — you’ll use them to sign in and run scans. Optional fields below help us route early-access interest.
       </p>
 
-      <p class="auth-section-title">Early access</p>
+      <div id="pw-signup-card">
+        <p class="auth-section-title">Email &amp; password</p>
+        <p class="auth-muted-small" style="margin-bottom:20px;">
+          Required on first visit: set the password you’ll use to sign in. At least <strong>12 characters</strong> with letters, numbers, and at least one symbol (e.g. <strong>! @ # $ % ^ &amp; *</strong>). Passwords are hashed with Argon2id; we never store plaintext.
+        </p>
+        <form id="pw-signup-form" action="#" autocomplete="on">
+          <div class="auth-field">
+            <label for="pw-su-email">Email</label>
+            <input id="pw-su-email" type="email" required placeholder="you@company.com" autocomplete="email" maxlength="320" />
+          </div>
+          <div class="auth-field">
+            <label for="pw-su-password">Password</label>
+            <input id="pw-su-password" type="password" required autocomplete="new-password" minlength="12" maxlength="256" aria-describedby="pw-su-requirements" />
+          </div>
+          <div class="auth-field">
+            <label for="pw-su-password2">Confirm password</label>
+            <input id="pw-su-password2" type="password" required autocomplete="new-password" minlength="12" maxlength="256" />
+          </div>
+          <p id="pw-su-requirements" class="auth-muted-small" style="margin:0 0 16px;font-size:13px;line-height:1.45;">
+            Requirements: 12+ characters · letters · numbers · one or more symbols (not spaces).
+          </p>
+          <button type="submit" id="pw-su-submit" class="auth-btn-primary">Create account</button>
+        </form>
+        <p id="pw-su-error" class="auth-feedback error" role="alert" style="display:none;margin-top:16px;"></p>
+      </div>
+
+      <div class="auth-divider"></div>
+
+      <p class="auth-section-title">Optional — Early access</p>
       <p class="auth-muted-small">
-        Required fields help us route your request. Business address and phone are optional but help us serve teams and comply with regional expectations. We don’t sell personal data; access is limited to people operating Syntrix.
+        Want us to follow up separately? Tell us more below. Required fields help us route your request; phone and address are optional.
       </p>
 
       <form id="waitlist-form" action="#" autocomplete="on">
@@ -76,27 +104,15 @@
 
       <div class="auth-divider"></div>
 
-      <p class="auth-section-title">Account sign-in</p>
+      <p class="auth-section-title">Enterprise SSO</p>
       <p class="auth-muted-small" style="margin-bottom:20px;">
-        When sign-in is live, use the button below to open the secure login flow and finish creating your account.
+        Only if your team connected Auth0 or another IdP here — otherwise use email &amp; password above.
       </p>
 
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
 
       <div id="auth-panel-ready" hidden>
-        <button id="signup-btn" type="button" class="auth-btn-primary">Continue to secure sign-up</button>
-      </div>
-
-      <div id="auth-panel-soon" hidden>
-        <div class="auth-msg auth-msg--soon">
-          <strong>Sign-in is almost ready</strong>
-          Complete the form above to register for access. When authentication is connected here, this button will open the standard secure sign-up screen.
-          <span style="display:block;margin-top:12px;font-size:14px;color:var(--text-mid);">
-            Questions?
-            <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20account%20access" style="color:var(--cyan);font-weight:600;">hello@syntrix.solutions</a>
-          </span>
-        </div>
-        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Secure sign-up not available yet</button>
+        <button id="signup-btn" type="button" class="auth-btn-secondary">Continue with SSO</button>
       </div>
 
       <div class="auth-footer-links">
@@ -108,7 +124,7 @@
         <p style="margin:12px 0 0;">
           <strong>Security:</strong> Webhook URLs, deployment tokens, and API secrets belong only in <strong>Netlify / Render environment variables</strong> (server-side). Do not commit them to git or put them in HTML, JS, or CSS served to visitors — the browser never needs your Apps Script or ingest URL.<br/><br/>
           <strong>Waitlist delivery</strong> is configured in <strong>netlify/functions/signup-notify.mjs</strong> (scanner ingest, webhook, email, or legacy script). After changing env vars, trigger a production deploy.<br/><br/>
-          <strong>Live scans</strong> use JWT sign-in: set identity variables on the Netlify build and matching values on the scanner API; use your hosted login callback URL in the identity provider. Until billing is ready, <strong>SYNTRIX_BILLING_REQUIRED=false</strong> on the scanner. Avoid disabling auth on public production.
+          <strong>Password sign-up</strong> requires <strong>SYNTRIX_PASSWORD_AUTH=true</strong> on the scanner and a matching Netlify build (<code>npm run build</code> writes <code>auth-config.js</code>). Set <strong>SYNTRIX_PASSWORD_AUTH=false</strong> on Netlify only if you intentionally disable password UI.
         </p>
       </details>
     </div>
@@ -122,7 +138,6 @@
   <script>
     (async () => {
       const ready = document.getElementById('auth-panel-ready');
-      const soon = document.getElementById('auth-panel-soon');
       const btn = document.getElementById('signup-btn');
       const err = document.getElementById('auth-error');
       const form = document.getElementById('waitlist-form');
@@ -193,11 +208,41 @@
 
       await window.SyntrixAuth.init();
 
-      const okAuth = window.SyntrixAuth.isConfigured();
-      if (okAuth) {
+      const pwForm = document.getElementById('pw-signup-form');
+      const pwErr = document.getElementById('pw-su-error');
+
+      if (window.SyntrixAuth.isAuth0Configured()) {
         ready.hidden = false;
-      } else {
-        soon.hidden = false;
+      }
+
+      if (pwForm) {
+        pwForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          pwErr.style.display = 'none';
+          const p1 = document.getElementById('pw-su-password').value;
+          const p2 = document.getElementById('pw-su-password2').value;
+          const policyErr = window.SyntrixAuth.validatePasswordPolicy(p1);
+          if (policyErr) {
+            pwErr.textContent = policyErr;
+            pwErr.style.display = 'block';
+            return;
+          }
+          if (p1 !== p2) {
+            pwErr.textContent = 'Passwords do not match.';
+            pwErr.style.display = 'block';
+            return;
+          }
+          try {
+            await window.SyntrixAuth.registerWithPassword(
+              document.getElementById('pw-su-email').value.trim(),
+              p1
+            );
+            window.location.href = `${window.location.origin}/index.html`;
+          } catch (ex) {
+            pwErr.textContent = ex.message || String(ex);
+            pwErr.style.display = 'block';
+          }
+        });
       }
 
       btn.addEventListener('click', async () => {

@@ -61,7 +61,7 @@ html, body { margin: 0; padding: 0; }
 .auth-nav a.brand-auth {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-decoration: none;
   color: var(--text);
   font-weight: 700;

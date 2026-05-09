@@ -8,7 +8,7 @@
 <meta property="og:description" content="Automated security scanning for MCP servers and AI agents. Find prompt injection, permission escalation, and exposure issues before attackers do." />
 <meta property="og:type" content="website" />
 <title>Syntrix — Security for Agentic AI</title>
-<link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
 <link rel="apple-touch-icon" href="assets/syntrix-logo-solid.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -89,7 +89,7 @@
     padding: 16px 0;
   }
   .brand {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 8px;
     font-weight: 700; font-size: 17px; letter-spacing: -0.01em;
   }
   .brand-logo {
@@ -97,8 +97,9 @@
     object-fit: contain;
     border-radius: 6px;
   }
-  .brand-logo--header { width: 64px; height: 64px; }
-  .brand-logo--footer { width: 48px; height: 48px; }
+  /* Tall mark: fixed height + auto width avoids empty lateral padding in the flex row */
+  .brand-logo--header { height: 64px; width: auto; display: block; }
+  .brand-logo--footer { height: 48px; width: auto; display: block; }
   .brand-name { color: var(--text); }
   .nav-links { display: flex; align-items: center; gap: 28px; }
   .nav-links a {
@@ -373,6 +374,25 @@
     text-decoration: none;
   }
   .scan-auth-hint a:hover { text-decoration: underline; }
+  .scan-guest-wrap {
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.55;
+  }
+  .scan-guest-wrap label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    max-width: 520px;
+  }
+  .scan-guest-wrap input[type="checkbox"] {
+    margin-top: 3px;
+    accent-color: var(--cyan);
+    flex-shrink: 0;
+  }
   .scan-results { margin-top: 32px; }
 
   .scan-status-bar {
@@ -945,7 +965,7 @@
     <div class="section-tag">Run a live scan</div>
     <h2>Point Syntrix at your agent. Get findings in 90 seconds.</h2>
     <p class="section-sub">
-      Sign in with your account and an active plan to run scans. Public targets only — results stream below.
+      Sign in for full access, or continue as a guest for one free scan per day (UTC). Public targets only — results stream below.
     </p>
 
     <div class="scan-card">
@@ -965,6 +985,12 @@
         <button id="scan-submit" class="btn btn-primary scan-btn" type="button">
           Start scan <span class="arrow">→</span>
         </button>
+      </div>
+      <div id="scan-guest-wrap" class="scan-guest-wrap" style="display:none">
+        <label>
+          <input type="checkbox" id="scan-as-guest" />
+          <span><strong style="color:var(--text);font-weight:600;">Continue as guest</strong> — one free scan per day (UTC), no account. Save this page to see results; bookmark is not required if you keep the tab open.</span>
+        </label>
       </div>
       <div class="scan-meta">
         Scans run from <strong style="color:var(--text-2)">api.syntrix.solutions</strong>.
@@ -1204,12 +1230,35 @@
     const elDepth   = document.getElementById('scan-depth');
     const btn       = document.getElementById('scan-submit');
     const elResults = document.getElementById('scan-results');
+    const guestWrap = document.getElementById('scan-guest-wrap');
 
     let pollTimer = null;
     let startTime = null;
     let accessToken = null;
 
+    function guestScansEnabled() {
+      return window.SYNTRIX_GUEST_SCANS === true || window.SYNTRIX_GUEST_SCANS === 'true';
+    }
+
+    function getGuestClientId() {
+      const KEY = 'syntrix_guest_client_id';
+      try {
+        let id = localStorage.getItem(KEY);
+        if (!id && typeof crypto !== 'undefined' && crypto.randomUUID) {
+          id = crypto.randomUUID();
+          localStorage.setItem(KEY, id);
+        }
+        return id || '';
+      } catch {
+        return '';
+      }
+    }
+
     initAuthUi();
+
+    if (guestWrap && guestScansEnabled()) {
+      guestWrap.style.display = '';
+    }
 
     btn.addEventListener('click', submitScan);
     elTarget.addEventListener('keydown', e => {
@@ -1217,17 +1266,24 @@
     });
 
     async function submitScan() {
-      if (!window.SyntrixAuth.isConfigured()) {
-        return showError('Sign-in isn’t connected on this deployment yet. Use Sign up / Log in in the navigation, or contact hello@syntrix.solutions.');
-      }
-      try {
-        accessToken = await window.SyntrixAuth.getAccessToken();
-      } catch (err) {
-        const msg = (err && err.message) ? String(err.message) : String(err);
-        if (msg.includes('not configured')) {
-          return showError('Sign-in isn’t configured on this site yet. Visit the signup page or contact hello@syntrix.solutions.');
+      const guestCb = document.getElementById('scan-as-guest');
+      const guestMode = !!(guestCb && guestCb.checked && guestScansEnabled());
+
+      if (!guestMode) {
+        if (!window.SyntrixAuth.isConfigured()) {
+          return showError('Sign-in isn’t connected on this deployment yet. Use “Continue as guest” below, or Sign up / Log in in the navigation, or contact hello@syntrix.solutions.');
         }
-        return showAuthRequiredError();
+        try {
+          accessToken = await window.SyntrixAuth.getAccessToken();
+        } catch (err) {
+          const msg = (err && err.message) ? String(err.message) : String(err);
+          if (msg.includes('not configured')) {
+            return showError('Sign-in isn’t configured on this site yet. Try “Continue as guest” below, visit the signup page, or contact hello@syntrix.solutions.');
+          }
+          return showAuthRequiredError();
+        }
+      } else {
+        accessToken = null;
       }
 
       const target = (elTarget.value || '').trim();
@@ -1254,20 +1310,48 @@
       }, 4000);
 
       try {
-        const r = await fetch(API_BASE + '/api/scans', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({
-            target_url: target,
-            scan_type: elType.value,
-            depth: elDepth.value
-          })
-        });
+        const payload = {
+          target_url: target,
+          scan_type: elType.value,
+          depth: elDepth.value
+        };
+
+        let r;
+        if (guestMode) {
+          const gid = getGuestClientId();
+          if (!gid) {
+            clearTimeout(coldTimer);
+            showError('Could not create a guest session (browser storage may be disabled).');
+            resetButton();
+            return;
+          }
+          r = await fetch(API_BASE + '/api/public/scans/guest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({}, payload, { guest_client_id: gid }))
+          });
+        } else {
+          r = await fetch(API_BASE + '/api/scans', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(payload)
+          });
+        }
         clearTimeout(coldTimer);
 
+        if (r.status === 429) {
+          let detail = 'Daily guest scan limit reached.';
+          try {
+            const errBody = await r.json();
+            if (typeof errBody.detail === 'string') detail = errBody.detail;
+          } catch (e) { /* ignore */ }
+          showError(detail);
+          resetButton();
+          return;
+        }
         if (r.status === 401) {
           showAuthRequiredError();
           resetButton();
@@ -1286,7 +1370,8 @@
 
         const data = await r.json();
         if (!data.scan_id) throw new Error('No scan_id in response');
-        pollScan(data.scan_id);
+        const pollTok = guestMode && data.poll_token ? data.poll_token : null;
+        pollScan(data.scan_id, pollTok);
       } catch (err) {
         clearTimeout(coldTimer);
         showError('Could not submit scan: ' + (err.message || err));
@@ -1294,12 +1379,18 @@
       }
     }
 
-    async function pollScan(scanId) {
+    async function pollScan(scanId, guestPollToken) {
       const tick = async () => {
         try {
-          const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId), {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          });
+          let r;
+          if (guestPollToken) {
+            const q = new URLSearchParams({ poll_token: guestPollToken });
+            r = await fetch(API_BASE + '/api/public/scans/' + encodeURIComponent(scanId) + '?' + q.toString());
+          } else {
+            r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId), {
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+          }
           if (!r.ok) throw new Error('status check failed: ' + r.status);
           const data = await r.json();
 
@@ -1313,7 +1404,7 @@
 
           if (data.status === 'complete') {
             renderSummary(data);
-            await loadFindings(scanId);
+            await loadFindings(scanId, guestPollToken);
             resetButton();
             return;
           }
@@ -1331,11 +1422,17 @@
       tick();
     }
 
-    async function loadFindings(scanId) {
+    async function loadFindings(scanId, guestPollToken) {
       try {
-        const r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId) + '/findings', {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
+        let r;
+        if (guestPollToken) {
+          const q = new URLSearchParams({ poll_token: guestPollToken });
+          r = await fetch(API_BASE + '/api/public/scans/' + encodeURIComponent(scanId) + '/findings?' + q.toString());
+        } else {
+          r = await fetch(API_BASE + '/api/scans/' + encodeURIComponent(scanId) + '/findings', {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          });
+        }
         if (!r.ok) throw new Error('findings request failed');
         const data = await r.json();
         renderFindings(data.findings || []);
@@ -1367,9 +1464,12 @@
 
     function showAuthRequiredError() {
       elResults.style.display = 'block';
+      const guestHint = guestScansEnabled()
+        ? ' Or check <strong>Continue as guest</strong> above for one free scan per day.'
+        : '';
       elResults.innerHTML = `
         <div class="scan-error">
-          ⚠ Sign in to run a scan.
+          ⚠ Sign in to run a scan.${guestHint}
           <a href="login.html" class="scan-error-link">Log in</a>
           or
           <a href="signup.html" class="scan-error-link">create an account</a>.

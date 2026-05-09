@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign in · Syntrix</title>
-  <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
 </head>
 <body class="auth-page">
@@ -13,7 +13,7 @@
 
   <nav class="auth-nav">
     <a class="brand-auth" href="index.html">
-      <img src="assets/syntrix-logo-solid.png" alt="" width="40" height="40" />
+      <img src="assets/syntrix-logo-solid.png" alt="" />
       SYNTRIX
     </a>
     <a class="link-muted" href="signup.html">Need an account?</a>
@@ -27,25 +27,34 @@
       </div>
       <h1>Welcome back</h1>
       <p class="auth-lede">
-        Sign in to run scans against your endpoints, review results, and manage your plan. You’ll use the same trusted login screen whether you signed up yesterday or months ago.
+        Sign in with your email and password to run scans and manage your plan.
       </p>
 
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
 
-      <div id="auth-panel-ready" hidden>
-        <button id="login-btn" type="button" class="auth-btn-primary">Continue to sign in</button>
+      <div id="pw-login-card">
+        <form id="pw-login-form" action="#" autocomplete="on">
+          <div class="auth-field">
+            <label for="pw-login-email">Email</label>
+            <input id="pw-login-email" type="email" required autocomplete="username" maxlength="320" />
+          </div>
+          <div class="auth-field">
+            <label for="pw-login-password">Password</label>
+            <input id="pw-login-password" type="password" required autocomplete="current-password" maxlength="256" />
+          </div>
+          <button type="submit" id="pw-login-submit" class="auth-btn-primary">Sign in</button>
+        </form>
       </div>
 
-      <div id="auth-panel-soon" hidden>
-        <div class="auth-msg auth-msg--soon">
-          <strong>Sign-in is finishing deployment</strong>
-          We’re connecting secure authentication. Check back shortly, or reach out if you need access sooner.
-          <span style="display:block;margin-top:12px;font-size:14px;color:var(--text-mid);">
-            Questions?
-            <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20sign-in" style="color:var(--cyan);font-weight:600;">Contact us</a>
-          </span>
-        </div>
-        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Sign-in unavailable for the moment</button>
+      <div class="auth-divider"></div>
+
+      <p class="auth-section-title">Enterprise SSO</p>
+      <p class="auth-muted-small" style="margin-bottom:16px;">
+        If your organization uses single sign-on through Auth0, use the button below.
+      </p>
+
+      <div id="auth-panel-ready" hidden>
+        <button id="login-btn" type="button" class="auth-btn-secondary">Continue with SSO</button>
       </div>
 
       <div class="auth-footer-links">
@@ -69,16 +78,32 @@
   <script>
     (async () => {
       const ready = document.getElementById('auth-panel-ready');
-      const soon = document.getElementById('auth-panel-soon');
       const btn = document.getElementById('login-btn');
       const err = document.getElementById('auth-error');
 
       await window.SyntrixAuth.init();
 
-      if (window.SyntrixAuth.isConfigured()) {
+      const pwForm = document.getElementById('pw-login-form');
+
+      if (window.SyntrixAuth.isAuth0Configured()) {
         ready.hidden = false;
-      } else {
-        soon.hidden = false;
+      }
+
+      if (pwForm) {
+        pwForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          err.style.display = 'none';
+          try {
+            await window.SyntrixAuth.loginWithPassword(
+              document.getElementById('pw-login-email').value.trim(),
+              document.getElementById('pw-login-password').value
+            );
+            window.location.href = `${window.location.origin}/index.html`;
+          } catch (ex) {
+            err.textContent = ex.message || String(ex);
+            err.style.display = 'block';
+          }
+        });
       }
 
       btn.addEventListener('click', async () => {
