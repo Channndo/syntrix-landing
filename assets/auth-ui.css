@@ -326,6 +326,57 @@ html, body { margin: 0; padding: 0; }
   border-color: var(--cyan);
 }
 
+.auth-input-password-wrap {
+  position: relative;
+  display: block;
+}
+
+.auth-input-password-wrap input {
+  padding-right: 48px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-mid);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.auth-password-toggle:hover {
+  color: var(--cyan);
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.auth-password-toggle svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.auth-password-toggle .auth-eye-off {
+  display: none;
+}
+
+.auth-password-toggle.is-visible .auth-eye-on {
+  display: none;
+}
+
+.auth-password-toggle.is-visible .auth-eye-off {
+  display: block;
+}
+
 .auth-btn-secondary {
   display: inline-flex;
   align-items: center;

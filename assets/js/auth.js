@@ -142,7 +142,7 @@
     const data = await r.json().catch(() => ({}));
     if (r.status === 404) {
       throw new Error(
-        'Password sign-up is not enabled on the API. Set SYNTRIX_PASSWORD_AUTH=true on the scanner service.'
+        'Password sign-up is turned off on the scanner API. Set SYNTRIX_PASSWORD_AUTH=true and SYNTRIX_JWT_SECRET (min 32 characters) on the server hosting your API, then restart — or contact hello@syntrix.solutions.'
       );
     }
     if (!r.ok) throw new Error(formatApiError(data));
