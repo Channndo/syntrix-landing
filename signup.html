@@ -172,6 +172,14 @@
           if (code === 'waitlist_not_configured') {
             errFb.textContent =
               'Registration could not be saved right now. Please try again in a moment or contact hello@syntrix.solutions.';
+          } else if (code === 'rate_limited') {
+            errFb.textContent =
+              'Too many attempts from this browser. Please wait a few minutes and try again.';
+          } else if (code === 'payload_too_large') {
+            errFb.textContent = 'That submission was too large. Shorten the address field and try again.';
+          } else if (code === 'delivery_failed') {
+            errFb.textContent =
+              'We could not confirm your registration with our systems. Please try again or email hello@syntrix.solutions.';
           } else {
             errFb.textContent =
               (werr && werr.message) ||

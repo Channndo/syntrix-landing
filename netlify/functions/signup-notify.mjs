@@ -1,14 +1,7 @@
 /**
  * Receives signup / waitlist POSTs from the landing site.
  *
- * First matching delivery wins:
- *
- * 0) Scanner API (SQLite waitlist_leads — no Google/Resend)
- *    WAITLIST_SCANNER_INGEST_URL  e.g. https://YOUR_API/api/public/waitlist
- *    WAITLIST_INGEST_SECRET       Bearer token — must equal scanner SYNTRIX_WAITLIST_INGEST_SECRET
- * 1) Webhook — SIGNUP_WEBHOOK_URL (+ optional SIGNUP_WEBHOOK_SECRET)
- * 2) Email — RESEND_* trio
- * 3) Legacy — APPS_SCRIPT_URL (full HTTPS URL) or bare Apps Script deployment token only
+ * Delivery paths: scanner ingest, webhook, Resend, Apps Script — see env vars in repo README / netlify.toml.
  */
 
 const ALLOW_ORIGIN = process.env.SYNTRIX_ORIGIN || "*";
@@ -32,10 +25,14 @@ const APPS_SCRIPT_URL_RAW = (
 ).trim();
 const APPS_SCRIPT_SECRET = (process.env.APPS_SCRIPT_SECRET || "").trim();
 
-/**
- * Netlify UI sometimes rejects URL-shaped values; you can store only the middle segment
- * from .../macros/s/THIS_PART/exec
- */
+/** Max JSON body size (bytes) — rejects oversized POSTs. */
+const MAX_BODY_BYTES = Number(process.env.SIGNUP_MAX_BODY_BYTES || 65536);
+
+/** Simple sliding-window limit per client IP (best-effort on warm instances). */
+const RATE_WINDOW_MS = Number(process.env.SIGNUP_RATE_WINDOW_MS || 900000);
+const RATE_MAX = Number(process.env.SIGNUP_RATE_MAX || 40);
+const rateBuckets = new Map();
+
 function resolveAppsScriptEndpoint(raw) {
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw)) return raw;
@@ -47,9 +44,40 @@ function resolveAppsScriptEndpoint(raw) {
 
 const APPS_SCRIPT_URL = resolveAppsScriptEndpoint(APPS_SCRIPT_URL_RAW);
 
+function clientIp(event) {
+  const xf =
+    event.headers["x-forwarded-for"] ||
+    event.headers["X-Forwarded-For"] ||
+    "";
+  const first = String(xf).split(",")[0].trim();
+  return first || "unknown";
+}
+
+function pruneRateBuckets(now) {
+  if (rateBuckets.size < 2000) return;
+  const cutoff = now - RATE_WINDOW_MS * 2;
+  for (const [ip, b] of rateBuckets) {
+    if (b.resetAt < cutoff) rateBuckets.delete(ip);
+  }
+}
+
+function rateLimitOk(ip) {
+  const now = Date.now();
+  pruneRateBuckets(now);
+  const b = rateBuckets.get(ip);
+  if (!b || now > b.resetAt) {
+    rateBuckets.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (b.count >= RATE_MAX) return false;
+  b.count += 1;
+  return true;
+}
+
 function headers(extra = {}) {
   return {
     "Content-Type": "application/json",
+    "X-Content-Type-Options": "nosniff",
     "Access-Control-Allow-Origin": ALLOW_ORIGIN,
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -85,6 +113,13 @@ function signupTextBody(payload) {
   ].join("\n");
 }
 
+/**
+ * Many backends return HTTP 200 with JSON { ok: false } (e.g. Apps Script). Treat as failure.
+ */
+function jsonIndicatesFailure(data) {
+  return data && typeof data === "object" && data.ok === false;
+}
+
 async function deliverScanner(payload) {
   const res = await fetch(WAITLIST_SCANNER_INGEST_URL, {
     method: "POST",
@@ -97,8 +132,17 @@ async function deliverScanner(payload) {
   });
   const text = await res.text();
   if (!res.ok) {
-    console.error("Scanner waitlist ingest", res.status, text);
+    console.error("Scanner waitlist ingest HTTP", res.status);
     return { ok: false };
+  }
+  try {
+    const data = JSON.parse(text);
+    if (jsonIndicatesFailure(data)) {
+      console.error("Scanner waitlist ingest logical failure");
+      return { ok: false };
+    }
+  } catch {
+    /* non-JSON success — accept if 2xx */
   }
   return { ok: true };
 }
@@ -114,8 +158,20 @@ async function deliverWebhook(payload) {
     redirect: "follow",
     body: JSON.stringify(payload),
   });
-  await res.text();
-  if (!res.ok) return { ok: false };
+  const text = await res.text();
+  if (!res.ok) {
+    console.error("Webhook HTTP", res.status);
+    return { ok: false };
+  }
+  try {
+    const data = JSON.parse(text);
+    if (jsonIndicatesFailure(data)) {
+      console.error("Webhook logical failure");
+      return { ok: false };
+    }
+  } catch {
+    /* plain-text OK */
+  }
   return { ok: true };
 }
 
@@ -136,8 +192,20 @@ async function deliverResend(payload) {
       text: signupTextBody(payload),
     }),
   });
-  await res.text();
-  if (!res.ok) return { ok: false };
+  const text = await res.text();
+  if (!res.ok) {
+    console.error("Resend HTTP", res.status);
+    return { ok: false };
+  }
+  try {
+    const data = JSON.parse(text);
+    if (data.error) {
+      console.error("Resend API error field present");
+      return { ok: false };
+    }
+  } catch {
+    /* ignore */
+  }
   return { ok: true };
 }
 
@@ -152,8 +220,26 @@ async function deliverAppsScript(payload) {
     redirect: "follow",
     body: JSON.stringify(body),
   });
-  await res.text();
-  if (!res.ok) return { ok: false };
+  const text = await res.text();
+  let data = null;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error("Apps Script non-JSON or parse error", res.status);
+    return { ok: false };
+  }
+  if (!res.ok || jsonIndicatesFailure(data)) {
+    console.error(
+      "Apps Script delivery failed",
+      res.status,
+      (data && data.error) || ""
+    );
+    return { ok: false };
+  }
+  if (data.ok !== true) {
+    console.error("Apps Script response missing ok:true");
+    return { ok: false };
+  }
   return { ok: true };
 }
 
@@ -170,6 +256,24 @@ export const handler = async (event) => {
     };
   }
 
+  const rawBody = event.body || "";
+  if (typeof rawBody === "string" && Buffer.byteLength(rawBody, "utf8") > MAX_BODY_BYTES) {
+    return {
+      statusCode: 413,
+      headers: headers(),
+      body: JSON.stringify({ ok: false, error: "payload_too_large" }),
+    };
+  }
+
+  const ip = clientIp(event);
+  if (!rateLimitOk(ip)) {
+    return {
+      statusCode: 429,
+      headers: headers(),
+      body: JSON.stringify({ ok: false, error: "rate_limited" }),
+    };
+  }
+
   const mode = deliveryMode();
   if (!mode) {
     return {
@@ -179,8 +283,7 @@ export const handler = async (event) => {
         ok: false,
         error: "waitlist_not_configured",
         message:
-          "Configure WAITLIST_SCANNER_INGEST_URL + WAITLIST_INGEST_SECRET on Netlify " +
-          "(matches scanner SYNTRIX_WAITLIST_INGEST_SECRET), or SIGNUP_WEBHOOK_URL / Resend / APPS_SCRIPT_URL.",
+          "Configure delivery environment variables on Netlify (see signup-notify source).",
       }),
     };
   }
@@ -256,7 +359,7 @@ export const handler = async (event) => {
       body: JSON.stringify({ ok: true }),
     };
   } catch (e) {
-    console.error(e);
+    console.error("signup-notify exception", e && e.message ? e.message : e);
     return {
       statusCode: 500,
       headers: headers(),
