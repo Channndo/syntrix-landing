@@ -1,6 +1,6 @@
 /**
  * Writes assets/js/auth-config.js from environment variables at build time.
- * Netlify: Site settings → Environment variables → AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE (optional).
+ * Netlify: Site settings → Environment variables — same keys this script reads from process.env (see assignments below).
  */
 import fs from 'fs';
 import path from 'path';

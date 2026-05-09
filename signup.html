@@ -27,7 +27,7 @@
       </div>
       <h1>Create your account</h1>
       <p class="auth-lede">
-        Register for early access with your work email. After we confirm Auth0 on this site, you’ll complete full account setup in one step.
+        Register for early access with your work email. Once secure sign-in is connected here, you’ll complete full account setup in one step.
       </p>
 
       <p class="auth-section-title">Early access</p>
@@ -71,7 +71,7 @@
             <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20account%20access" style="color:var(--cyan);font-weight:600;">hello@syntrix.solutions</a>
           </span>
         </div>
-        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Sign-up via Auth0 not ready yet</button>
+        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Secure sign-up not available yet</button>
       </div>
 
       <div class="auth-footer-links">
@@ -82,8 +82,8 @@
         <summary>Technical setup (operators)</summary>
         <p style="margin:12px 0 0;">
           Set Netlify env <strong>APPS_SCRIPT_URL</strong> (+ optional <strong>APPS_SCRIPT_SECRET</strong>). Paste script from <strong>scripts/google-apps-script-sample.txt</strong> into the Sheet → Apps Script, deploy Web app URL, redeploy Netlify.<br/><br/>
-          Auth0:<br/>
-          Fill <strong>assets/js/auth-overlay.js</strong> or Netlify AUTH0_* build vars.<br/>
+          Identity / sign-in:<br/>
+          Fill <strong>assets/js/auth-overlay.js</strong> or set Netlify build env vars used by <strong>scripts/write-auth-config.mjs</strong> (domain, SPA client ID, optional API audience).<br/>
           Callback:
           <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>
         </p>

@@ -1,16 +1,16 @@
 /**
- * Emergency / local Auth0 wiring (runs AFTER auth-config.js from the build).
+ * Optional local SPA identity overrides (runs AFTER auth-config.js from the build).
  *
  * Netlify CI may leave domain/client empty if env vars weren’t set. Fill the three
- * strings below and deploy — SPA Client ID + Auth0 Domain are fine to ship in frontend
- * (never put an Application Client Secret here).
+ * strings below and deploy — SPA client ID + issuer domain are fine to ship in the frontend
+ * (never put a client secret here).
  *
- * Auth0 Dashboard → Applications → SPA app:
- *   - Domain → Settings (“Domain”)
+ * From your hosted identity console (SPA / native app):
+ *   - Issuer domain (“Domain” / authority URL host)
  *   - Client ID
- * APIs → Identifier → same string as AUTH0_AUDIENCE on your Render scanner API (optional).
+ * Optional API identifier — same string as the scanner API expects for JWT audience (optional).
  *
- * Allowed Callback URL MUST include exactly:
+ * Allowed callback URL MUST include exactly:
  *   https://YOUR_DOMAIN/auth-callback.html
  */
 (function () {

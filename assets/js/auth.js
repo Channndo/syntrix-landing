@@ -9,7 +9,7 @@
     return (window.SYNTRIX_AUTH0_AUDIENCE || '').trim();
   }
 
-  /** One fixed callback URL — must match Auth0 Application → Callback URLs exactly. */
+  /** One fixed callback URL — must match the SPA app’s allowed callback URLs exactly. */
   function redirectUri() {
     return `${window.location.origin}/auth-callback.html`;
   }
@@ -37,7 +37,7 @@
       clientId: clientId(),
       authorizationParams: authParams,
       cacheLocation: 'localstorage',
-      // Set true only if the Auth0 app has refresh tokens + rotation enabled
+      // Set true only if the identity app has refresh tokens + rotation enabled
       useRefreshTokens: false,
     });
 
@@ -58,7 +58,7 @@
   }
 
   async function getAccessToken() {
-    if (!auth0Client) throw new Error('Auth0 is not configured');
+    if (!auth0Client) throw new Error('Sign-in is not configured yet');
     const aud = audience();
     const opts = aud ? { authorizationParams: { audience: aud } } : {};
     return auth0Client.getTokenSilently(opts);
@@ -76,12 +76,12 @@
 
   /**
    * @param {'login'|'signup'} mode
-   * @param {string} [returnTo] full URL to open after Auth0 (default: current page)
+   * @param {string} [returnTo] full URL to open after sign-in completes (default: current page)
    */
   async function login(mode, returnTo) {
     if (!auth0Client) {
       throw new Error(
-        'Auth0 is not configured. Set AUTH0_DOMAIN + AUTH0_CLIENT_ID on Netlify, or paste them in assets/js/auth-overlay.js'
+        'Sign-in is not configured yet. Set identity variables on Netlify for the auth config build, or paste domain and client ID in assets/js/auth-overlay.js'
       );
     }
     const target =
