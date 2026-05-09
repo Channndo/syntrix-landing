@@ -309,6 +309,13 @@ html, body { margin: 0; padding: 0; }
   display: none;
 }
 
+.auth-feedback:empty {
+  display: none !important;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
 .auth-feedback.success {
   display: block;
   border: 1px solid rgba(74, 222, 128, 0.35);

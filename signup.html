@@ -27,12 +27,12 @@
       </div>
       <h1>Create your account</h1>
       <p class="auth-lede">
-        Join the early access list (we save your email to our Google Sheet and notify the team instantly), then continue through secure signup when authentication is enabled.
+        Register for early access with your work email. After we confirm Auth0 on this site, you’ll complete full account setup in one step.
       </p>
 
-      <p class="auth-section-title">Step 1 — Join the list</p>
+      <p class="auth-section-title">Early access</p>
       <p class="auth-muted-small">
-        Your email is appended to our sheet and sent to <strong style="color:var(--text)">chandler.hill.24@gmail.com</strong> so nothing gets lost while we finish the live Auth0 flow.
+        We use your email only to confirm registration and follow up about Syntrix. Your details are handled securely and never displayed publicly.
       </p>
 
       <form id="waitlist-form" action="#" autocomplete="on">
@@ -44,16 +44,16 @@
           <label for="waitlist-name">Name <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
           <input id="waitlist-name" type="text" placeholder="Your name" autocomplete="name" maxlength="200" />
         </div>
-        <button type="submit" id="waitlist-submit" class="auth-btn-secondary">Save my spot &amp; notify the team</button>
+        <button type="submit" id="waitlist-submit" class="auth-btn-secondary">Submit registration</button>
       </form>
       <p id="waitlist-feedback-success" class="auth-feedback success" role="status" aria-live="polite"></p>
       <p id="waitlist-feedback-error" class="auth-feedback error" role="alert"></p>
 
       <div class="auth-divider"></div>
 
-      <p class="auth-section-title">Step 2 — Secure account (Auth0)</p>
+      <p class="auth-section-title">Account sign-in</p>
       <p class="auth-muted-small" style="margin-bottom:20px;">
-        After you’ve joined the list, open a full login when Auth0 is connected on this deployment.
+        When sign-in is live, use the button below to open the secure login flow and finish creating your account.
       </p>
 
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
@@ -64,8 +64,8 @@
 
       <div id="auth-panel-soon" hidden>
         <div class="auth-msg auth-msg--soon">
-          <strong>Auth0 signup is finishing on this deployment</strong>
-          You can still join the sheet above — once Auth0 credentials are wired, this button sends you straight through email-based signup with our provider.
+          <strong>Sign-in is almost ready</strong>
+          Complete the form above to register for access. When authentication is connected here, this button will open the standard secure sign-up screen.
           <span style="display:block;margin-top:12px;font-size:14px;color:var(--text-mid);">
             Questions?
             <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20account%20access" style="color:var(--cyan);font-weight:600;">hello@syntrix.solutions</a>
@@ -79,7 +79,7 @@
       </div>
 
       <details class="auth-details">
-        <summary>For operators (Netlify + Google Sheet)</summary>
+        <summary>Technical setup (operators)</summary>
         <p style="margin:12px 0 0;">
           Set Netlify env <strong>APPS_SCRIPT_URL</strong> (+ optional <strong>APPS_SCRIPT_SECRET</strong>). Paste script from <strong>scripts/google-apps-script-sample.txt</strong> into the Sheet → Apps Script, deploy Web app URL, redeploy Netlify.<br/><br/>
           Auth0:<br/>
@@ -125,13 +125,13 @@
             type: 'early_access_sheet',
           });
           okFb.textContent =
-            "You're on the list — we appended this row to our Google Sheet and emailed chandler.hill.24@gmail.com.";
+            "Thanks — your registration was received. We'll follow up at the email you provided.";
           okFb.classList.add('success');
         } catch (werr) {
           const code = werr.code || '';
           if (code === 'waitlist_not_configured') {
             errFb.textContent =
-              'Sheet save isn\'t wired on the server yet. In Netlify, set APPS_SCRIPT_URL using the snippet in scripts/google-apps-script-sample.txt, then redeploy.';
+              'Registration could not be saved right now. Please try again in a moment or contact hello@syntrix.solutions.';
           } else {
             errFb.textContent =
               (werr && werr.message) ||

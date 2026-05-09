@@ -1,7 +1,7 @@
 ================================================================================
 GOOGLE SHEETS + EMAIL — paste into your Sheet (Extensions → Apps Script)
 ================================================================================
-1. Open the Google Sheet owned by chandler.hill.24@gmail.com (or any account).
+1. Open the Google Sheet you want to own (your Google account).
 2. Create a tab named exactly: Signups   (or change SHEET_NAME below to match)
 3. Extensions → Apps Script → delete default code → paste the script below
 4. Run once: select function "authorize" is not needed — first save, then Deploy →
@@ -14,7 +14,7 @@ GOOGLE SHEETS + EMAIL — paste into your Sheet (Extensions → Apps Script)
 
 --------------------------------------------------------------------------------
 // ----- begin Apps Script -----
-const NOTIFY_EMAIL = 'chandler.hill.24@gmail.com';
+const NOTIFY_EMAIL = 'your-inbox@example.com'; // replace with where you want signup alerts
 const SHEET_NAME = 'Signups';
 
 // Must match Netlify APPS_SCRIPT_SECRET — leave blank on BOTH sides to skip check (not recommended)

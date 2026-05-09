@@ -84,7 +84,6 @@ export const handler = async (event) => {
     source,
     type,
     ts: new Date().toISOString(),
-    ownerEmail: "chandler.hill.24@gmail.com",
   };
 
   try {
