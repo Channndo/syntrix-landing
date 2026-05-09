@@ -10,19 +10,42 @@
   <main style="max-width:480px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
     <h1 style="margin-top:0;">Create your Syntrix account</h1>
     <p>Sign up securely to run authenticated scans and manage subscriptions.</p>
-    <button id="signup-btn" style="padding:10px 16px;">Continue to sign up</button>
+    <p id="auth-error" style="color:#f87171;font-size:14px;display:none;"></p>
+    <p id="auth-missing-config" style="color:#fbbf24;font-size:13px;line-height:1.5;display:none;">
+      Auth0 is not configured yet. Edit <code style="color:#22d3ee;">assets/js/auth-config.js</code>
+      and redeploy. Add callback URL <code style="color:#22d3ee;">https://syntrix.solutions/auth-callback.html</code> in Auth0.
+    </p>
+    <button id="signup-btn" type="button" style="padding:10px 16px;cursor:pointer;">Continue to sign up</button>
     <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
   </main>
 
+  <script src="assets/js/auth-config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
   <script>
-    window.SYNTRIX_AUTH0_DOMAIN = '';
-    window.SYNTRIX_AUTH0_CLIENT_ID = '';
-    window.SYNTRIX_AUTH0_AUDIENCE = '';
     (async () => {
+      const btn = document.getElementById('signup-btn');
+      const err = document.getElementById('auth-error');
+      const missing = document.getElementById('auth-missing-config');
+
       await window.SyntrixAuth.init();
-      document.getElementById('signup-btn').addEventListener('click', () => window.SyntrixAuth.login('signup'));
+
+      if (!window.SyntrixAuth.isConfigured()) {
+        missing.style.display = 'block';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        return;
+      }
+
+      btn.addEventListener('click', async () => {
+        err.style.display = 'none';
+        try {
+          await window.SyntrixAuth.login('signup', `${window.location.origin}/index.html`);
+        } catch (e) {
+          err.textContent = e.message || String(e);
+          err.style.display = 'block';
+        }
+      });
     })();
   </script>
 </body>

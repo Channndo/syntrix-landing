@@ -10,19 +10,44 @@
   <main style="max-width:480px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
     <h1 style="margin-top:0;">Log in to Syntrix</h1>
     <p>Use secure Auth0 login to access scans and billing.</p>
-    <button id="login-btn" style="padding:10px 16px;">Continue to login</button>
+    <p id="auth-error" style="color:#f87171;font-size:14px;display:none;"></p>
+    <p id="auth-missing-config" style="color:#fbbf24;font-size:13px;line-height:1.5;display:none;">
+      Auth0 is not configured on this site yet. Edit <code style="color:#22d3ee;">assets/js/auth-config.js</code>
+      with your Auth0 domain and SPA client ID, add
+      <code style="color:#22d3ee;">https://syntrix.solutions/auth-callback.html</code>
+      to Callback URLs in Auth0, then redeploy.
+    </p>
+    <button id="login-btn" type="button" style="padding:10px 16px;cursor:pointer;">Continue to login</button>
     <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
   </main>
 
+  <script src="assets/js/auth-config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
   <script>
-    window.SYNTRIX_AUTH0_DOMAIN = '';
-    window.SYNTRIX_AUTH0_CLIENT_ID = '';
-    window.SYNTRIX_AUTH0_AUDIENCE = '';
     (async () => {
+      const btn = document.getElementById('login-btn');
+      const err = document.getElementById('auth-error');
+      const missing = document.getElementById('auth-missing-config');
+
       await window.SyntrixAuth.init();
-      document.getElementById('login-btn').addEventListener('click', () => window.SyntrixAuth.login('login'));
+
+      if (!window.SyntrixAuth.isConfigured()) {
+        missing.style.display = 'block';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        return;
+      }
+
+      btn.addEventListener('click', async () => {
+        err.style.display = 'none';
+        try {
+          await window.SyntrixAuth.login('login', `${window.location.origin}/index.html`);
+        } catch (e) {
+          err.textContent = e.message || String(e);
+          err.style.display = 'block';
+        }
+      });
     })();
   </script>
 </body>

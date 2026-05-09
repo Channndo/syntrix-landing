@@ -10,30 +10,44 @@
   <main style="max-width:560px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
     <h1 style="margin-top:0;">Your account</h1>
     <p id="profile">Loading account details...</p>
+    <p id="auth-error" style="color:#f87171;font-size:14px;display:none;"></p>
     <div style="display:flex;gap:12px;flex-wrap:wrap;">
-      <button id="manage-billing" style="padding:10px 16px;">Manage billing</button>
-      <button id="logout-btn" style="padding:10px 16px;">Logout</button>
+      <button id="manage-billing" type="button" style="padding:10px 16px;cursor:pointer;">Manage billing</button>
+      <button id="logout-btn" type="button" style="padding:10px 16px;cursor:pointer;">Logout</button>
     </div>
     <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
   </main>
 
   <script>window.SYNTRIX_API_BASE = 'https://api.syntrix.solutions';</script>
+  <script src="assets/js/auth-config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/billing.js"></script>
   <script>
-    window.SYNTRIX_AUTH0_DOMAIN = '';
-    window.SYNTRIX_AUTH0_CLIENT_ID = '';
-    window.SYNTRIX_AUTH0_AUDIENCE = '';
     (async () => {
+      const profileEl = document.getElementById('profile');
+      const errEl = document.getElementById('auth-error');
+
       await window.SyntrixAuth.init();
+
+      if (!window.SyntrixAuth.isConfigured()) {
+        profileEl.textContent = 'Auth0 is not configured. Edit assets/js/auth-config.js and redeploy.';
+        return;
+      }
+
       const authed = await window.SyntrixAuth.isAuthenticated();
       if (!authed) {
-        await window.SyntrixAuth.login('login');
+        try {
+          await window.SyntrixAuth.login('login', `${window.location.origin}${window.location.pathname}`);
+        } catch (e) {
+          errEl.textContent = e.message || String(e);
+          errEl.style.display = 'block';
+          profileEl.textContent = 'Could not start login.';
+        }
         return;
       }
       const profile = await window.SyntrixAuth.getProfile();
-      document.getElementById('profile').textContent = `Signed in as ${profile?.email || profile?.name || 'user'}.`;
+      profileEl.textContent = `Signed in as ${profile?.email || profile?.name || 'user'}.`;
       document.getElementById('manage-billing').addEventListener('click', async () => {
         try {
           await window.SyntrixBilling.openPortal();

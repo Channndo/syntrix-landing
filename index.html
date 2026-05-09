@@ -978,6 +978,11 @@
         ·
         <a href="billing.html">Plans &amp; billing</a>
       </p>
+      <p id="auth-config-banner" class="scan-auth-hint" style="display:none;color:var(--amber)">
+        Auth0 is not set up on this deploy yet. Add your domain and client ID in
+        <code style="color:var(--cyan)">assets/js/auth-config.js</code>, set the callback URL
+        <code style="color:var(--cyan)">https://syntrix.solutions/auth-callback.html</code> in Auth0, then redeploy the site.
+      </p>
     </div>
 
     <div id="scan-results" class="scan-results" style="display:none"></div>
@@ -1186,10 +1191,8 @@
 
 <script>
   window.SYNTRIX_API_BASE = 'https://api.syntrix.solutions';
-  window.SYNTRIX_AUTH0_DOMAIN = '';
-  window.SYNTRIX_AUTH0_CLIENT_ID = '';
-  window.SYNTRIX_AUTH0_AUDIENCE = '';
 </script>
+<script src="assets/js/auth-config.js"></script>
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/billing.js"></script>
@@ -1215,9 +1218,16 @@
     });
 
     async function submitScan() {
+      if (!window.SyntrixAuth.isConfigured()) {
+        return showError('Auth0 is not configured. Edit assets/js/auth-config.js with your Auth0 domain and client ID, then redeploy the landing site.');
+      }
       try {
         accessToken = await window.SyntrixAuth.getAccessToken();
       } catch (err) {
+        const msg = (err && err.message) ? String(err.message) : String(err);
+        if (msg.includes('not configured')) {
+          return showError('Auth0 is not configured. Edit assets/js/auth-config.js, then redeploy.');
+        }
         return showAuthRequiredError();
       }
 
@@ -1449,6 +1459,10 @@
     async function initAuthUi() {
       try {
         await window.SyntrixAuth.init();
+        const configured = window.SyntrixAuth.isConfigured();
+        const banner = document.getElementById('auth-config-banner');
+        if (banner) banner.style.display = configured ? 'none' : 'block';
+
         const authed = await window.SyntrixAuth.isAuthenticated();
         const login = document.getElementById('nav-login');
         const signup = document.getElementById('nav-signup');
@@ -1484,8 +1498,16 @@
             const plan = el.getAttribute('data-plan');
             if (plan === 'free') return;
             event.preventDefault();
+            if (!window.SyntrixAuth.isConfigured()) {
+              showError('Auth0 is not configured. Edit assets/js/auth-config.js and redeploy before checkout.');
+              return;
+            }
             if (!authed) {
-              await window.SyntrixAuth.login('signup');
+              try {
+                await window.SyntrixAuth.login('signup', `${window.location.origin}/index.html#pricing`);
+              } catch (e) {
+                showError(e.message || 'Could not start sign-in.');
+              }
               return;
             }
             try {

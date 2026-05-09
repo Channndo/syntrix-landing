@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syntrix — Signing you in…</title>
+  <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+  <style>
+    body { font-family: system-ui; background: #060b14; color: #e5eefb; display: grid; place-items: center; min-height: 100vh; margin: 0; }
+    p { color: #93a4c0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div>
+    <p>Completing sign-in…</p>
+  </div>
+  <script src="assets/js/auth-config.js"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    (async () => {
+      try {
+        await window.SyntrixAuth.init();
+      } catch (e) {
+        window.location.replace('login.html?error=' + encodeURIComponent(e.message || 'auth_failed'));
+      }
+    })();
+  </script>
+</body>
+</html>
