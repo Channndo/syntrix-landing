@@ -978,10 +978,11 @@
         ·
         <a href="billing.html">Plans &amp; billing</a>
       </p>
-      <p id="auth-config-banner" class="scan-auth-hint" style="display:none;color:var(--amber)">
-        Auth0 is not set up on this deploy yet. Add your domain and client ID in
-        <code style="color:var(--cyan)">assets/js/auth-config.js</code>, set the callback URL
-        <code style="color:var(--cyan)">https://syntrix.solutions/auth-callback.html</code> in Auth0, then redeploy the site.
+      <p id="auth-config-banner" class="scan-auth-hint" style="display:none;border:1px solid var(--line-2);border-radius:10px;padding:14px 18px;background:rgba(251,191,36,0.06);color:var(--text-2);line-height:1.55;">
+        <strong style="color:var(--text)">Account sign-in is updating.</strong>
+        Scans need a signed-in account. When our host finishes connecting authentication, log in here — or get help at
+        <a href="mailto:hello@syntrix.solutions" style="color:var(--cyan);font-weight:600;text-decoration:none;">hello@syntrix.solutions</a>.
+        · <a href="signup.html" style="color:var(--cyan);font-weight:600;text-decoration:none;">Create an account</a>
       </p>
     </div>
 
@@ -1219,14 +1220,14 @@
 
     async function submitScan() {
       if (!window.SyntrixAuth.isConfigured()) {
-        return showError('Auth0 is not configured. Edit assets/js/auth-config.js with your Auth0 domain and client ID, then redeploy the landing site.');
+        return showError('Sign-in isn’t connected on this deployment yet. Use Sign up / Log in in the navigation, or contact hello@syntrix.solutions.');
       }
       try {
         accessToken = await window.SyntrixAuth.getAccessToken();
       } catch (err) {
         const msg = (err && err.message) ? String(err.message) : String(err);
         if (msg.includes('not configured')) {
-          return showError('Auth0 is not configured. Edit assets/js/auth-config.js, then redeploy.');
+          return showError('Sign-in isn’t configured on this site yet. Visit the signup page or contact hello@syntrix.solutions.');
         }
         return showAuthRequiredError();
       }
@@ -1499,7 +1500,7 @@
             if (plan === 'free') return;
             event.preventDefault();
             if (!window.SyntrixAuth.isConfigured()) {
-              showError('Auth0 is not configured. Edit assets/js/auth-config.js and redeploy before checkout.');
+              showError('Billing needs sign-in to be enabled on this deployment. Visit signup or email hello@syntrix.solutions.');
               return;
             }
             if (!authed) {

@@ -3,20 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Syntrix Sign Up</title>
+  <title>Create account · Syntrix</title>
   <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+  <link rel="stylesheet" href="assets/auth-ui.css" />
 </head>
-<body style="font-family:system-ui;background:#060b14;color:#e5eefb;display:grid;place-items:center;min-height:100vh;">
-  <main style="max-width:480px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
-    <h1 style="margin-top:0;">Create your Syntrix account</h1>
-    <p>Sign up securely to run authenticated scans and manage subscriptions.</p>
-    <p id="auth-error" style="color:#f87171;font-size:14px;display:none;"></p>
-    <p id="auth-missing-config" style="color:#fbbf24;font-size:13px;line-height:1.5;display:none;">
-      Auth0 is not configured yet. Edit <code style="color:#22d3ee;">assets/js/auth-config.js</code>
-      and redeploy. Add callback URL <code style="color:#22d3ee;">https://syntrix.solutions/auth-callback.html</code> in Auth0.
-    </p>
-    <button id="signup-btn" type="button" style="padding:10px 16px;cursor:pointer;">Continue to sign up</button>
-    <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
+<body class="auth-page">
+  <div class="auth-bg" aria-hidden="true"></div>
+  <div class="auth-glow" aria-hidden="true"></div>
+
+  <nav class="auth-nav">
+    <a class="brand-auth" href="index.html">
+      <img src="assets/syntrix-logo-solid.png" alt="" width="40" height="40" />
+      SYNTRIX
+    </a>
+    <a class="link-muted" href="login.html">Already have an account?</a>
+  </nav>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-pill">
+        <span class="auth-pill-dot"></span>
+        Secure sign-up
+      </div>
+      <h1>Create your account</h1>
+      <p class="auth-lede">
+        One account for live scans, private results, and subscription billing. We’ll send you through a quick, secure login — no passwords stored on our marketing site.
+      </p>
+
+      <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
+
+      <!-- Shown when Auth0 env is wired (Netlify secrets or local auth-config.js) -->
+      <div id="auth-panel-ready" hidden>
+        <button id="signup-btn" type="button" class="auth-btn-primary">Continue to secure sign-up</button>
+      </div>
+
+      <!-- Friendly fallback when signup isn’t wired yet -->
+      <div id="auth-panel-soon" hidden>
+        <div class="auth-msg auth-msg--soon">
+          <strong>Account sign-up is finishing deployment</strong>
+          Secure login is powered by our authentication partner. Once the connection is complete, this button will take you straight to email sign-up — usually within a deploy or two after launch.
+          <span style="display:block;margin-top:12px;font-size:14px;color:var(--text-mid);">
+            Need early access?
+            <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20account%20access" style="color:var(--cyan);font-weight:600;">Email the team</a>
+          </span>
+        </div>
+        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Sign-up unavailable for the moment</button>
+      </div>
+
+      <div class="auth-footer-links">
+        <a href="index.html">← Back to Syntrix</a>
+      </div>
+
+      <details class="auth-details">
+        <summary>For teams self-hosting</summary>
+        <p style="margin:12px 0 0;">
+          Hosting on Netlify: add <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, and optionally <strong>AUTH0_AUDIENCE</strong> under Site settings → Environment variables so the next build fills in auth automatically. Confirm your Auth0 app allows callback
+          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>.
+        </p>
+      </details>
+    </div>
   </main>
 
   <script src="assets/js/auth-config.js"></script>
@@ -24,17 +69,18 @@
   <script src="assets/js/auth.js"></script>
   <script>
     (async () => {
+      const ready = document.getElementById('auth-panel-ready');
+      const soon = document.getElementById('auth-panel-soon');
       const btn = document.getElementById('signup-btn');
       const err = document.getElementById('auth-error');
-      const missing = document.getElementById('auth-missing-config');
 
       await window.SyntrixAuth.init();
 
-      if (!window.SyntrixAuth.isConfigured()) {
-        missing.style.display = 'block';
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        return;
+      const ok = window.SyntrixAuth.isConfigured();
+      if (ok) {
+        ready.hidden = false;
+      } else {
+        soon.hidden = false;
       }
 
       btn.addEventListener('click', async () => {

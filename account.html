@@ -3,19 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Syntrix Account</title>
+  <title>Account · Syntrix</title>
   <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+  <link rel="stylesheet" href="assets/auth-ui.css" />
 </head>
-<body style="font-family:system-ui;background:#060b14;color:#e5eefb;display:grid;place-items:center;min-height:100vh;">
-  <main style="max-width:560px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
-    <h1 style="margin-top:0;">Your account</h1>
-    <p id="profile">Loading account details...</p>
-    <p id="auth-error" style="color:#f87171;font-size:14px;display:none;"></p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-      <button id="manage-billing" type="button" style="padding:10px 16px;cursor:pointer;">Manage billing</button>
-      <button id="logout-btn" type="button" style="padding:10px 16px;cursor:pointer;">Logout</button>
+<body class="auth-page">
+  <div class="auth-bg" aria-hidden="true"></div>
+  <div class="auth-glow" aria-hidden="true"></div>
+
+  <nav class="auth-nav">
+    <a class="brand-auth" href="index.html">
+      <img src="assets/syntrix-logo-solid.png" alt="" width="40" height="40" />
+      SYNTRIX
+    </a>
+    <a class="link-muted" href="billing.html">Billing</a>
+  </nav>
+
+  <main class="auth-main">
+    <div class="auth-card" style="max-width:520px;">
+      <div class="auth-pill">
+        <span class="auth-pill-dot"></span>
+        Account
+      </div>
+      <h1 style="margin-bottom:16px;">Your account</h1>
+      <p id="profile" class="auth-lede" style="margin-bottom:24px;">Loading…</p>
+      <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
+      <div id="acct-actions" hidden class="auth-action-row">
+        <button id="manage-billing" type="button" class="auth-btn-primary" style="width:auto;padding:12px 20px;">Manage billing</button>
+        <button id="logout-btn" type="button" class="auth-btn-primary auth-outline-btn">Sign out</button>
+      </div>
+      <div class="auth-footer-links" style="margin-top:28px;text-align:left;">
+        <a href="index.html">← Back to Syntrix</a>
+      </div>
     </div>
-    <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
   </main>
 
   <script>window.SYNTRIX_API_BASE = 'https://api.syntrix.solutions';</script>
@@ -27,11 +47,13 @@
     (async () => {
       const profileEl = document.getElementById('profile');
       const errEl = document.getElementById('auth-error');
+      const actions = document.getElementById('acct-actions');
 
       await window.SyntrixAuth.init();
 
       if (!window.SyntrixAuth.isConfigured()) {
-        profileEl.textContent = 'Auth0 is not configured. Edit assets/js/auth-config.js and redeploy.';
+        profileEl.textContent =
+          'We’re finishing account connections on this deployment. Try again shortly, or email hello@syntrix.solutions for help.';
         return;
       }
 
@@ -42,12 +64,15 @@
         } catch (e) {
           errEl.textContent = e.message || String(e);
           errEl.style.display = 'block';
-          profileEl.textContent = 'Could not start login.';
+          profileEl.textContent = 'Couldn’t start sign-in.';
         }
         return;
       }
+
       const profile = await window.SyntrixAuth.getProfile();
-      profileEl.textContent = `Signed in as ${profile?.email || profile?.name || 'user'}.`;
+      profileEl.textContent = `Signed in as ${profile?.email || profile?.name || 'you'}.`;
+      actions.hidden = false;
+
       document.getElementById('manage-billing').addEventListener('click', async () => {
         try {
           await window.SyntrixBilling.openPortal();

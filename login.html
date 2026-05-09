@@ -3,22 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Syntrix Login</title>
+  <title>Sign in · Syntrix</title>
   <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+  <link rel="stylesheet" href="assets/auth-ui.css" />
 </head>
-<body style="font-family:system-ui;background:#060b14;color:#e5eefb;display:grid;place-items:center;min-height:100vh;">
-  <main style="max-width:480px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
-    <h1 style="margin-top:0;">Log in to Syntrix</h1>
-    <p>Use secure Auth0 login to access scans and billing.</p>
-    <p id="auth-error" style="color:#f87171;font-size:14px;display:none;"></p>
-    <p id="auth-missing-config" style="color:#fbbf24;font-size:13px;line-height:1.5;display:none;">
-      Auth0 is not configured on this site yet. Edit <code style="color:#22d3ee;">assets/js/auth-config.js</code>
-      with your Auth0 domain and SPA client ID, add
-      <code style="color:#22d3ee;">https://syntrix.solutions/auth-callback.html</code>
-      to Callback URLs in Auth0, then redeploy.
-    </p>
-    <button id="login-btn" type="button" style="padding:10px 16px;cursor:pointer;">Continue to login</button>
-    <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
+<body class="auth-page">
+  <div class="auth-bg" aria-hidden="true"></div>
+  <div class="auth-glow" aria-hidden="true"></div>
+
+  <nav class="auth-nav">
+    <a class="brand-auth" href="index.html">
+      <img src="assets/syntrix-logo-solid.png" alt="" width="40" height="40" />
+      SYNTRIX
+    </a>
+    <a class="link-muted" href="signup.html">Need an account?</a>
+  </nav>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-pill">
+        <span class="auth-pill-dot"></span>
+        Secure sign-in
+      </div>
+      <h1>Welcome back</h1>
+      <p class="auth-lede">
+        Sign in to run scans against your endpoints, review results, and manage your plan. You’ll use the same trusted login screen whether you signed up yesterday or months ago.
+      </p>
+
+      <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
+
+      <div id="auth-panel-ready" hidden>
+        <button id="login-btn" type="button" class="auth-btn-primary">Continue to sign in</button>
+      </div>
+
+      <div id="auth-panel-soon" hidden>
+        <div class="auth-msg auth-msg--soon">
+          <strong>Sign-in is finishing deployment</strong>
+          We’re connecting secure authentication. Check back shortly, or reach out if you need access sooner.
+          <span style="display:block;margin-top:12px;font-size:14px;color:var(--text-mid);">
+            Questions?
+            <a href="mailto:hello@syntrix.solutions?subject=Syntrix%20sign-in" style="color:var(--cyan);font-weight:600;">Contact us</a>
+          </span>
+        </div>
+        <button type="button" class="auth-btn-primary" disabled aria-disabled="true">Sign-in unavailable for the moment</button>
+      </div>
+
+      <div class="auth-footer-links">
+        <a href="index.html">← Back to Syntrix</a>
+      </div>
+
+      <details class="auth-details">
+        <summary>For teams self-hosting</summary>
+        <p style="margin:12px 0 0;">
+          On Netlify, set environment variables <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, and optionally <strong>AUTH0_AUDIENCE</strong>, then trigger a rebuild. Allowed callback URL in Auth0:
+          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>
+        </p>
+      </details>
+    </div>
   </main>
 
   <script src="assets/js/auth-config.js"></script>
@@ -26,17 +67,17 @@
   <script src="assets/js/auth.js"></script>
   <script>
     (async () => {
+      const ready = document.getElementById('auth-panel-ready');
+      const soon = document.getElementById('auth-panel-soon');
       const btn = document.getElementById('login-btn');
       const err = document.getElementById('auth-error');
-      const missing = document.getElementById('auth-missing-config');
 
       await window.SyntrixAuth.init();
 
-      if (!window.SyntrixAuth.isConfigured()) {
-        missing.style.display = 'block';
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        return;
+      if (window.SyntrixAuth.isConfigured()) {
+        ready.hidden = false;
+      } else {
+        soon.hidden = false;
       }
 
       btn.addEventListener('click', async () => {

@@ -3,19 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Syntrix Billing</title>
+  <title>Billing · Syntrix</title>
   <link rel="icon" type="image/png" href="assets/syntrix-favicon.png" />
+  <link rel="stylesheet" href="assets/auth-ui.css" />
 </head>
-<body style="font-family:system-ui;background:#060b14;color:#e5eefb;display:grid;place-items:center;min-height:100vh;">
-  <main style="max-width:560px;padding:32px;border:1px solid #1a2942;border-radius:12px;background:#0a1320;">
-    <h1 style="margin-top:0;">Billing</h1>
-    <p>Choose a subscription to unlock paid scans.</p>
-    <p id="auth-error" style="color:#f87171;font-size:14px;display:none;"></p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-      <button id="buy-pro" type="button" style="padding:10px 16px;cursor:pointer;">Start Pro subscription</button>
-      <button id="buy-team" type="button" style="padding:10px 16px;cursor:pointer;">Start Team subscription</button>
+<body class="auth-page">
+  <div class="auth-bg" aria-hidden="true"></div>
+  <div class="auth-glow" aria-hidden="true"></div>
+
+  <nav class="auth-nav">
+    <a class="brand-auth" href="index.html">
+      <img src="assets/syntrix-logo-solid.png" alt="" width="40" height="40" />
+      SYNTRIX
+    </a>
+    <a class="link-muted" href="account.html">Account</a>
+  </nav>
+
+  <main class="auth-main">
+    <div class="auth-card" style="max-width:520px;">
+      <div class="auth-pill">
+        <span class="auth-pill-dot"></span>
+        Plans
+      </div>
+      <h1 style="margin-bottom:12px;">Choose a plan</h1>
+      <p class="auth-lede" style="margin-bottom:24px;">
+        Subscriptions unlock automated scans and private results. You’ll check out securely with our payment provider.
+      </p>
+      <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
+      <div id="billing-actions" hidden class="auth-action-row">
+        <button id="buy-pro" type="button" class="auth-btn-primary" style="width:auto;padding:12px 20px;">Pro</button>
+        <button id="buy-team" type="button" class="auth-btn-primary" style="width:auto;padding:12px 20px;">Team</button>
+      </div>
+      <div class="auth-footer-links" style="margin-top:28px;text-align:left;">
+        <a href="index.html">← Back to Syntrix</a>
+      </div>
     </div>
-    <p style="margin-top:16px;"><a href="index.html" style="color:#22d3ee;">Back to home</a></p>
   </main>
 
   <script>window.SYNTRIX_API_BASE = 'https://api.syntrix.solutions';</script>
@@ -26,12 +48,17 @@
   <script>
     (async () => {
       const errEl = document.getElementById('auth-error');
+      const actions = document.getElementById('billing-actions');
 
       await window.SyntrixAuth.init();
 
       if (!window.SyntrixAuth.isConfigured()) {
-        errEl.textContent = 'Configure assets/js/auth-config.js (Auth0 domain + client ID) and redeploy.';
         errEl.style.display = 'block';
+        errEl.style.borderColor = 'var(--line)';
+        errEl.style.background = 'rgba(15, 26, 44, 0.5)';
+        errEl.style.color = 'var(--text-mid)';
+        errEl.textContent =
+          'Sign-in isn’t connected on this deployment yet, so billing can’t start. Email hello@syntrix.solutions or try again after the next site update.';
         return;
       }
 
@@ -40,11 +67,14 @@
         try {
           await window.SyntrixAuth.login('login', `${window.location.origin}${window.location.pathname}`);
         } catch (e) {
-          errEl.textContent = e.message || String(e);
           errEl.style.display = 'block';
+          errEl.textContent = e.message || String(e);
         }
         return;
       }
+
+      actions.hidden = false;
+
       document.getElementById('buy-pro').addEventListener('click', async () => {
         try {
           await window.SyntrixBilling.startCheckout('pro');
