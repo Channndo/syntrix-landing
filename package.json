@@ -1,0 +1,11 @@
+{
+  "name": "syntrix-landing",
+  "private": true,
+  "description": "Static marketing + auth flows; Netlify runs build before publish.",
+  "scripts": {
+    "build": "node scripts/write-auth-config.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

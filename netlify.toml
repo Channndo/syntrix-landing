@@ -1,5 +1,5 @@
-# Builds auth-config.js from Auth0 secrets in Netlify → Site settings → Environment variables.
-# Set: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE (recommended, match Render API AUTH0_AUDIENCE)
+# Option A — env vars at build time: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE
+# Option B — edit assets/js/auth-overlay.js in git (SPA domain + client ID are public)
 [build]
-  command = "node scripts/write-auth-config.mjs"
+  command = "npm run build"
   publish = "."

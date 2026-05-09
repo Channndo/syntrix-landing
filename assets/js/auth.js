@@ -81,7 +81,7 @@
   async function login(mode, returnTo) {
     if (!auth0Client) {
       throw new Error(
-        'Auth0 is not configured. Add domain and client ID in assets/js/auth-config.js'
+        'Auth0 is not configured. Set AUTH0_DOMAIN + AUTH0_CLIENT_ID on Netlify, or paste them in assets/js/auth-overlay.js'
       );
     }
     const target =

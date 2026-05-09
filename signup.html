@@ -57,14 +57,17 @@
       <details class="auth-details">
         <summary>For teams self-hosting</summary>
         <p style="margin:12px 0 0;">
-          Hosting on Netlify: add <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, and optionally <strong>AUTH0_AUDIENCE</strong> under Site settings → Environment variables so the next build fills in auth automatically. Confirm your Auth0 app allows callback
-          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>.
+          Fastest: edit <strong>assets/js/auth-overlay.js</strong> with your Auth0 domain and SPA client ID, then deploy.
+          Or on Netlify set <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, <strong>AUTH0_AUDIENCE</strong> and run a build — see <strong>npm run build</strong> / <strong>scripts/write-auth-config.mjs</strong>.
+          Callback URL:
+          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>
         </p>
       </details>
     </div>
   </main>
 
   <script src="assets/js/auth-config.js"></script>
+  <script src="assets/js/auth-overlay.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
   <script>
