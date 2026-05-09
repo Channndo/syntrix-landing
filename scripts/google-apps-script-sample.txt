@@ -1,5 +1,7 @@
 ================================================================================
-OPTIONAL LEGACY — Google Sheet + email via Apps Script (skip if you use webhook / Resend)
+OPTIONAL — Google Sheet + email via Apps Script (skip if you use webhook / Resend)
+  • Sheet already exists? Use the script below (container-bound).
+  • Want the script to create the Sheet for you? See google-apps-script-standalone.txt
 ================================================================================
 1. Open the Google Sheet you want to own (your Google account).
 2. Create a tab named exactly: Signups   (or change SHEET_NAME below to match)

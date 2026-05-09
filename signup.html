@@ -84,8 +84,11 @@
           <strong>Waitlist form (recommended — no Google)</strong><br/>
           1. On Render (scanner): <strong>SYNTRIX_WAITLIST_INGEST_SECRET</strong> — long random string (e.g. <code>openssl rand -hex 32</code>).<br/>
           2. On Netlify: <strong>WAITLIST_SCANNER_INGEST_URL</strong> = your API + <strong>/api/public/waitlist</strong> &nbsp;e.g.&nbsp;<span style="word-break:break-all;">https://api.syntrix.solutions/api/public/waitlist</span><br/>
-          3. On Netlify: <strong>WAITLIST_INGEST_SECRET</strong> = <em>exact same string</em> as step 1 (sent as Bearer from the Netlify function). Redeploy Netlify.<br/>
-          Fallbacks: webhook / Resend / Apps Script — see <strong>netlify/functions/signup-notify.mjs</strong>.<br/><br/>
+          3. On Netlify: <strong>WAITLIST_INGEST_SECRET</strong> = <em>exact same string</em> as step 1. <strong>Push this repo to Git and trigger a Netlify deploy</strong> — env vars alone don’t update until deploy.<br/>
+          <strong>Spreadsheet (generic CSV)</strong> — after leads exist in SQLite: download with the same secret —
+          <span style="word-break:break-all;"><code>curl -sL -H &quot;Authorization: Bearer YOUR_SECRET&quot; &quot;https://api.syntrix.solutions/api/public/waitlist/export&quot; -o leads.csv</code></span>
+          then open <code>leads.csv</code> in Excel / Numbers / LibreOffice / Google Sheets (File → Import).<br/>
+          Google Apps Script: <strong>APPS_SCRIPT_URL</strong> can be the full <code>https://script.google.com/…/exec</code> link or <strong>only the deployment ID</strong> (middle segment). Optional alias <strong>APPS_SCRIPT_DEPLOYMENT_ID</strong>. Fallbacks: webhook / Resend — <strong>netlify/functions/signup-notify.mjs</strong>.<br/><br/>
           <strong>Live scans require sign-in JWT</strong> (separate from the waitlist row): Netlify build <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, <strong>AUTH0_AUDIENCE</strong>; Scanner <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_AUDIENCE</strong>. Callback
           <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>. Until Stripe works: <strong>SYNTRIX_BILLING_REQUIRED=false</strong>.
           Temporary last resort only: <strong>SYNTRIX_AUTH_REQUIRED=false</strong> exposes scans without login — do not leave on public production.<br/><br/>

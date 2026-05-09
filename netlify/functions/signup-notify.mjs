@@ -8,7 +8,7 @@
  *    WAITLIST_INGEST_SECRET       Bearer token — must equal scanner SYNTRIX_WAITLIST_INGEST_SECRET
  * 1) Webhook — SIGNUP_WEBHOOK_URL (+ optional SIGNUP_WEBHOOK_SECRET)
  * 2) Email — RESEND_* trio
- * 3) Legacy — APPS_SCRIPT_URL
+ * 3) Legacy — APPS_SCRIPT_URL (full HTTPS URL) or bare Apps Script deployment token only
  */
 
 const ALLOW_ORIGIN = process.env.SYNTRIX_ORIGIN || "*";
@@ -25,8 +25,27 @@ const RESEND_API_KEY = (process.env.RESEND_API_KEY || "").trim();
 const SIGNUP_NOTIFY_TO = (process.env.SIGNUP_NOTIFY_TO || "").trim();
 const RESEND_FROM = (process.env.RESEND_FROM || "").trim();
 
-const APPS_SCRIPT_URL = (process.env.APPS_SCRIPT_URL || "").trim();
+const APPS_SCRIPT_URL_RAW = (
+  process.env.APPS_SCRIPT_URL ||
+  process.env.APPS_SCRIPT_DEPLOYMENT_ID ||
+  ""
+).trim();
 const APPS_SCRIPT_SECRET = (process.env.APPS_SCRIPT_SECRET || "").trim();
+
+/**
+ * Netlify UI sometimes rejects URL-shaped values; you can store only the middle segment
+ * from .../macros/s/THIS_PART/exec
+ */
+function resolveAppsScriptEndpoint(raw) {
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^[\w-]+$/.test(raw)) {
+    return `https://script.google.com/macros/s/${raw}/exec`;
+  }
+  return raw;
+}
+
+const APPS_SCRIPT_URL = resolveAppsScriptEndpoint(APPS_SCRIPT_URL_RAW);
 
 function headers(extra = {}) {
   return {
