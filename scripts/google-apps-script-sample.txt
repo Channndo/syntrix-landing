@@ -1,25 +1,15 @@
-================================================================================
-OPTIONAL — Google Sheet + email via Apps Script (skip if you use webhook / Resend)
-  • Sheet already exists? Use the script below (container-bound).
-  • Want the script to create the Sheet for you? See google-apps-script-standalone.txt
-================================================================================
-1. Open the Google Sheet you want to own (your Google account).
-2. Create a tab named exactly: Signups   (or change SHEET_NAME below to match)
-3. Extensions → Apps Script → delete default code → paste the script below
-4. Run once: select function "authorize" is not needed — first save, then Deploy →
-   New deployment → type "Web app":
-     - Execute as: Me
-     - Who has access: Anyone
-5. Copy the Web app URL → Netlify env var APPS_SCRIPT_URL
-6. Pick a random secret string, put it in EXPECTED_SECRET below AND in Netlify APPS_SCRIPT_SECRET
-7. Redeploy Netlify (functions pick up new env automatically on next deploy)
+// OPTIONAL — container-bound Apps Script (paste only the block marked CODE into Apps Script).
+// For auto-created workbook see google-apps-script-standalone.txt
+//
+// 1) Open your Google Sheet → Extensions → Apps Script
+// 2) Paste CODE below, set NOTIFY_EMAIL / EXPECTED_SECRET
+// 3) Deploy → Web app → Execute as: Me, Who has access: Anyone
+// 4) Store deployment URL / token only in Netlify env (never in git or public HTML)
 
---------------------------------------------------------------------------------
-// ----- begin Apps Script -----
-const NOTIFY_EMAIL = 'your-inbox@example.com'; // replace with where you want signup alerts
+// ----- begin CODE -----
+const NOTIFY_EMAIL = 'your-inbox@example.com';
 const SHEET_NAME = 'Signups';
 
-// Must match Netlify APPS_SCRIPT_SECRET — leave blank on BOTH sides to skip check (not recommended)
 const EXPECTED_SECRET = '';
 
 function doPost(e) {
@@ -43,7 +33,17 @@ function doPost(e) {
   var sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
-    sh.appendRow(['Timestamp', 'Email', 'Name', 'Source', 'Type', 'ISO time', 'Owner ref']);
+    sh.appendRow([
+      'Timestamp',
+      'Email',
+      'Full name',
+      'Phone',
+      'Business address',
+      'Referral',
+      'Source',
+      'Type',
+      'Submitted ISO',
+    ]);
   }
 
   var ts = new Date();
@@ -51,10 +51,12 @@ function doPost(e) {
     ts,
     email,
     data.name || '',
+    data.phone || '',
+    data.business_address || '',
+    data.referral_source || '',
     data.source || '',
     data.type || '',
     data.ts || '',
-    data.ownerEmail || NOTIFY_EMAIL,
   ]);
 
   MailApp.sendEmail({
@@ -65,8 +67,17 @@ function doPost(e) {
       'Email: ' +
       email +
       '\n' +
-      'Name: ' +
+      'Full name: ' +
       (data.name || '(none)') +
+      '\n' +
+      'Phone: ' +
+      (data.phone || '(none)') +
+      '\n' +
+      'Business address: ' +
+      (data.business_address || '(none)') +
+      '\n' +
+      'Referral: ' +
+      (data.referral_source || '(none)') +
       '\n' +
       'Source: ' +
       (data.source || '') +
@@ -74,7 +85,10 @@ function doPost(e) {
       'Type: ' +
       (data.type || '') +
       '\n' +
-      'Time: ' +
+      'Submitted (ISO): ' +
+      (data.ts || '') +
+      '\n' +
+      'Received: ' +
       ts.toISOString(),
   });
 
@@ -82,7 +96,7 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput('Syntrix waitlist webhook — POST JSON here').setMimeType(
+  return ContentService.createTextOutput('Syntrix waitlist webhook - POST JSON here').setMimeType(
     ContentService.MimeType.TEXT
   );
 }
@@ -91,8 +105,6 @@ function jsonOut(obj, code) {
   var out = ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
     ContentService.MimeType.JSON
   );
-  // Apps Script ignores HTTP status in most setups; callers check JSON body.
   return out;
 }
-// ----- end Apps Script -----
---------------------------------------------------------------------------------
+// ----- end CODE -----

@@ -256,7 +256,9 @@ html, body { margin: 0; padding: 0; }
   letter-spacing: 0.02em;
 }
 
-.auth-field input {
+.auth-field input,
+.auth-field textarea,
+.auth-field select {
   width: 100%;
   padding: 12px 14px;
   border-radius: 8px;
@@ -266,9 +268,22 @@ html, body { margin: 0; padding: 0; }
   font-family: inherit;
   font-size: 15px;
   transition: border-color 0.15s;
+  box-sizing: border-box;
 }
 
-.auth-field input:focus {
+.auth-field textarea {
+  min-height: 88px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.auth-field select {
+  cursor: pointer;
+}
+
+.auth-field input:focus,
+.auth-field textarea:focus,
+.auth-field select:focus {
   outline: none;
   border-color: var(--cyan);
 }

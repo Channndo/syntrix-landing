@@ -1,5 +1,5 @@
 /**
- * Submit waitlist / signup interest to Netlify Function → Google Apps Script → Sheet + email.
+ * Submit waitlist / signup interest to the Netlify function `signup-notify` (server-side delivery only).
  */
 (function () {
   async function submitWaitlist(fields) {
@@ -11,6 +11,9 @@
       body: JSON.stringify({
         email: fields.email,
         name: fields.name || '',
+        phone: fields.phone || '',
+        business_address: fields.business_address || '',
+        referral_source: fields.referral_source || '',
         source: fields.source || 'signup_page',
         type: fields.type || 'waitlist',
       }),

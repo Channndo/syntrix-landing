@@ -75,7 +75,10 @@ function signupTextBody(payload) {
     "New Syntrix signup / waitlist entry",
     "",
     `Email: ${payload.email}`,
-    `Name: ${payload.name || "(none)"}`,
+    `Full name: ${payload.name || "(none)"}`,
+    `Phone: ${payload.phone || "(none)"}`,
+    `Business address: ${payload.business_address || "(none)"}`,
+    `How they heard about us: ${payload.referral_source || "(none)"}`,
     `Source: ${payload.source || ""}`,
     `Type: ${payload.type || ""}`,
     `Time: ${payload.ts}`,
@@ -203,12 +206,22 @@ export const handler = async (event) => {
   }
 
   const name = body.name ? String(body.name).trim().slice(0, 200) : "";
+  const phone = body.phone ? String(body.phone).trim().slice(0, 40) : "";
+  const business_address = body.business_address
+    ? String(body.business_address).trim().slice(0, 500)
+    : "";
+  const referral_source = body.referral_source
+    ? String(body.referral_source).trim().slice(0, 200)
+    : "";
   const source = body.source ? String(body.source).slice(0, 120) : "signup_page";
   const type = body.type ? String(body.type).slice(0, 80) : "waitlist";
 
   const payload = {
     email,
     name,
+    phone,
+    business_address,
+    referral_source,
     source,
     type,
     ts: new Date().toISOString(),

@@ -27,12 +27,12 @@
       </div>
       <h1>Create your account</h1>
       <p class="auth-lede">
-        Register for early access with your work email. Once secure sign-in is connected here, you’ll complete full account setup in one step.
+        Register for early access. We use what you submit only to confirm interest, qualify leads, and follow up about Syntrix. When secure sign-in is live here, you’ll finish account setup in one step.
       </p>
 
       <p class="auth-section-title">Early access</p>
       <p class="auth-muted-small">
-        We use your email only to confirm registration and follow up about Syntrix. Your details are handled securely and never displayed publicly.
+        Required fields help us route your request. Business address and phone are optional but help us serve teams and comply with regional expectations. We don’t sell personal data; access is limited to people operating Syntrix.
       </p>
 
       <form id="waitlist-form" action="#" autocomplete="on">
@@ -41,8 +41,33 @@
           <input id="waitlist-email" type="email" required placeholder="you@company.com" autocomplete="email" maxlength="320" />
         </div>
         <div class="auth-field">
-          <label for="waitlist-name">Name <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
-          <input id="waitlist-name" type="text" placeholder="Your name" autocomplete="name" maxlength="200" />
+          <label for="waitlist-name">Full name</label>
+          <input id="waitlist-name" type="text" required placeholder="Jane Doe" autocomplete="name" maxlength="200" />
+        </div>
+        <div class="auth-field">
+          <label for="waitlist-phone">Phone <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
+          <input id="waitlist-phone" type="tel" placeholder="+1 …" autocomplete="tel" maxlength="40" />
+        </div>
+        <div class="auth-field">
+          <label for="waitlist-address">Business address <span style="opacity:0.6;font-weight:400;">(optional)</span></label>
+          <textarea id="waitlist-address" placeholder="Company, street, city, region, postal code" autocomplete="street-address" maxlength="500"></textarea>
+        </div>
+        <div class="auth-field">
+          <label for="waitlist-referral">How did you hear about us?</label>
+          <select id="waitlist-referral" required>
+            <option value="" disabled selected>Choose one…</option>
+            <option value="Search engine">Search engine</option>
+            <option value="Peer or colleague">Peer or colleague</option>
+            <option value="Conference or event">Conference or event</option>
+            <option value="Social media">Social media</option>
+            <option value="Podcast or webinar">Podcast or webinar</option>
+            <option value="News or article">News or article</option>
+            <option value="__other__">Other</option>
+          </select>
+        </div>
+        <div class="auth-field" id="referral-other-wrap" hidden>
+          <label for="waitlist-referral-other">Tell us more <span style="opacity:0.6;font-weight:400;">(if Other)</span></label>
+          <input id="waitlist-referral-other" type="text" maxlength="200" placeholder="e.g. newsletter name, community, link" />
         </div>
         <button type="submit" id="waitlist-submit" class="auth-btn-secondary">Submit registration</button>
       </form>
@@ -81,18 +106,9 @@
       <details class="auth-details">
         <summary>Technical setup (operators)</summary>
         <p style="margin:12px 0 0;">
-          <strong>Waitlist form (recommended — no Google)</strong><br/>
-          1. On Render (scanner): <strong>SYNTRIX_WAITLIST_INGEST_SECRET</strong> — long random string (e.g. <code>openssl rand -hex 32</code>).<br/>
-          2. On Netlify: <strong>WAITLIST_SCANNER_INGEST_URL</strong> = your API + <strong>/api/public/waitlist</strong> &nbsp;e.g.&nbsp;<span style="word-break:break-all;">https://api.syntrix.solutions/api/public/waitlist</span><br/>
-          3. On Netlify: <strong>WAITLIST_INGEST_SECRET</strong> = <em>exact same string</em> as step 1. <strong>Push this repo to Git and trigger a Netlify deploy</strong> — env vars alone don’t update until deploy.<br/>
-          <strong>Spreadsheet (generic CSV)</strong> — after leads exist in SQLite: download with the same secret —
-          <span style="word-break:break-all;"><code>curl -sL -H &quot;Authorization: Bearer YOUR_SECRET&quot; &quot;https://api.syntrix.solutions/api/public/waitlist/export&quot; -o leads.csv</code></span>
-          then open <code>leads.csv</code> in Excel / Numbers / LibreOffice / Google Sheets (File → Import).<br/>
-          Google Apps Script: <strong>APPS_SCRIPT_URL</strong> can be the full <code>https://script.google.com/…/exec</code> link or <strong>only the deployment ID</strong> (middle segment). Optional alias <strong>APPS_SCRIPT_DEPLOYMENT_ID</strong>. Fallbacks: webhook / Resend — <strong>netlify/functions/signup-notify.mjs</strong>.<br/><br/>
-          <strong>Live scans require sign-in JWT</strong> (separate from the waitlist row): Netlify build <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, <strong>AUTH0_AUDIENCE</strong>; Scanner <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_AUDIENCE</strong>. Callback
-          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>. Until Stripe works: <strong>SYNTRIX_BILLING_REQUIRED=false</strong>.
-          Temporary last resort only: <strong>SYNTRIX_AUTH_REQUIRED=false</strong> exposes scans without login — do not leave on public production.<br/><br/>
-          Optional <strong>SYNTRIX_API_BASE</strong> in Netlify build; or <strong>assets/js/auth-overlay.js</strong> after <strong>auth-config.js</strong>.
+          <strong>Security:</strong> Webhook URLs, deployment tokens, and API secrets belong only in <strong>Netlify / Render environment variables</strong> (server-side). Do not commit them to git or put them in HTML, JS, or CSS served to visitors — the browser never needs your Apps Script or ingest URL.<br/><br/>
+          <strong>Waitlist delivery</strong> is configured in <strong>netlify/functions/signup-notify.mjs</strong> (scanner ingest, webhook, email, or legacy script). After changing env vars, trigger a production deploy.<br/><br/>
+          <strong>Live scans</strong> use JWT sign-in: set identity variables on the Netlify build and matching values on the scanner API; use your hosted login callback URL in the identity provider. Until billing is ready, <strong>SYNTRIX_BILLING_REQUIRED=false</strong> on the scanner. Avoid disabling auth on public production.
         </p>
       </details>
     </div>
@@ -112,7 +128,16 @@
       const form = document.getElementById('waitlist-form');
       const emailInput = document.getElementById('waitlist-email');
       const nameInput = document.getElementById('waitlist-name');
+      const phoneInput = document.getElementById('waitlist-phone');
+      const addressInput = document.getElementById('waitlist-address');
+      const referralSelect = document.getElementById('waitlist-referral');
+      const referralOtherWrap = document.getElementById('referral-other-wrap');
+      const referralOtherInput = document.getElementById('waitlist-referral-other');
       const wlSubmit = document.getElementById('waitlist-submit');
+
+      referralSelect.addEventListener('change', () => {
+        referralOtherWrap.hidden = referralSelect.value !== '__other__';
+      });
       const okFb = document.getElementById('waitlist-feedback-success');
       const errFb = document.getElementById('waitlist-feedback-error');
 
@@ -125,9 +150,17 @@
         wlSubmit.disabled = true;
 
         try {
+          let referral = referralSelect.value;
+          if (referral === '__other__') {
+            const extra = (referralOtherInput.value || '').trim();
+            referral = extra ? 'Other: ' + extra : 'Other';
+          }
           await window.SyntrixWaitlist.submitWaitlist({
             email: emailInput.value.trim(),
             name: nameInput.value.trim(),
+            phone: phoneInput.value.trim(),
+            business_address: addressInput.value.trim(),
+            referral_source: referral,
             source: 'signup_page',
             type: 'early_access_sheet',
           });

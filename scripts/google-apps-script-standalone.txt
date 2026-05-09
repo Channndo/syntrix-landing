@@ -7,28 +7,32 @@
 // 2) Select createSyntrixSignupsWorkbook → Run → authorize.
 // 3) View → Logs — copy the spreadsheet URL from "Created: ..."
 // 4) Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone
-// 5) Copy Web app URL → Netlify APPS_SCRIPT_URL. Redeploy Netlify.
-//    Clear Netlify WAITLIST_SCANNER_INGEST_URL if you want this script (not scanner) first.
+// 5) Put the Web App URL or deployment ID in Netlify env only (never in public HTML).
 // =============================================================================
 
 var PROP_KEY = 'SYNTRIX_WAITLIST_SHEET_ID';
 
-// Replace with your inbox:
 var NOTIFY_EMAIL = 'your-inbox@example.com';
 var SHEET_NAME = 'Signups';
 
-// Must match Netlify APPS_SCRIPT_SECRET — leave '' on BOTH sides to skip (weak):
 var EXPECTED_SECRET = '';
 
-/**
- * Run ONCE. Creates "Syntrix signups" in Drive and stores its ID.
- */
 function createSyntrixSignupsWorkbook() {
   var ss = SpreadsheetApp.create('Syntrix signups');
   PropertiesService.getScriptProperties().setProperty(PROP_KEY, ss.getId());
   var sh = ss.getSheets()[0];
   sh.setName(SHEET_NAME);
-  sh.appendRow(['Timestamp', 'Email', 'Name', 'Source', 'Type', 'ISO time', 'Owner ref']);
+  sh.appendRow([
+    'Timestamp',
+    'Email',
+    'Full name',
+    'Phone',
+    'Business address',
+    'Referral',
+    'Source',
+    'Type',
+    'Submitted ISO',
+  ]);
   Logger.log('Created: ' + ss.getUrl());
 }
 
@@ -61,19 +65,29 @@ function doPost(e) {
   var sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
-    sh.appendRow(['Timestamp', 'Email', 'Name', 'Source', 'Type', 'ISO time', 'Owner ref']);
+    sh.appendRow([
+      'Timestamp',
+      'Email',
+      'Full name',
+      'Phone',
+      'Business address',
+      'Referral',
+      'Source',
+      'Type',
+      'Submitted ISO',
+    ]);
   }
 
   var ts = new Date();
-  sh.appendRow([
-    ts,
-    email,
-    data.name || '',
-    data.source || '',
-    data.type || '',
-    data.ts || '',
-    data.ownerEmail || NOTIFY_EMAIL,
-  ]);
+  var name = String(data.name || '');
+  var phone = String(data.phone || '');
+  var addr = String(data.business_address || '');
+  var referral = String(data.referral_source || '');
+  var src = String(data.source || '');
+  var typ = String(data.type || '');
+  var iso = String(data.ts || '');
+
+  sh.appendRow([ts, email, name, phone, addr, referral, src, typ, iso]);
 
   MailApp.sendEmail({
     to: NOTIFY_EMAIL,
@@ -83,16 +97,28 @@ function doPost(e) {
       'Email: ' +
       email +
       '\n' +
-      'Name: ' +
-      (data.name || '(none)') +
+      'Full name: ' +
+      name +
+      '\n' +
+      'Phone: ' +
+      phone +
+      '\n' +
+      'Business address: ' +
+      addr +
+      '\n' +
+      'Referral: ' +
+      referral +
       '\n' +
       'Source: ' +
-      (data.source || '') +
+      src +
       '\n' +
       'Type: ' +
-      (data.type || '') +
+      typ +
       '\n' +
-      'Time: ' +
+      'Submitted (ISO): ' +
+      iso +
+      '\n' +
+      'Received: ' +
       ts.toISOString(),
   });
 
