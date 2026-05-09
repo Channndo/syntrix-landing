@@ -1,7 +1,7 @@
 # Option A — identity env vars at build time (see scripts/write-auth-config.mjs)
 # Option B — edit assets/js/auth-overlay.js in git (SPA domain + client ID are public)
-# Waitlist → Google Sheet: set APPS_SCRIPT_URL (+ optional APPS_SCRIPT_SECRET) in Netlify env.
-# Paste the sample script from scripts/google-apps-script-sample.txt into the Sheet’s Apps Script.
+# Waitlist delivery (pick one): SIGNUP_WEBHOOK_URL, or Resend (RESEND_API_KEY + SIGNUP_NOTIFY_TO + RESEND_FROM),
+# or legacy APPS_SCRIPT_URL — see netlify/functions/signup-notify.mjs
 [build]
   command = "npm run build"
   publish = "."

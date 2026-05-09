@@ -81,7 +81,7 @@
       <details class="auth-details">
         <summary>Technical setup (operators)</summary>
         <p style="margin:12px 0 0;">
-          Set Netlify env <strong>APPS_SCRIPT_URL</strong> (+ optional <strong>APPS_SCRIPT_SECRET</strong>). Paste script from <strong>scripts/google-apps-script-sample.txt</strong> into the Sheet → Apps Script, deploy Web app URL, redeploy Netlify.<br/><br/>
+          Waitlist: set <strong>SIGNUP_WEBHOOK_URL</strong> (optional <strong>SIGNUP_WEBHOOK_SECRET</strong>), or Resend (<strong>RESEND_API_KEY</strong>, <strong>SIGNUP_NOTIFY_TO</strong>, <strong>RESEND_FROM</strong>), or legacy <strong>APPS_SCRIPT_URL</strong> — see <strong>netlify/functions/signup-notify.mjs</strong>. Redeploy Netlify after changing env.<br/><br/>
           Identity / sign-in:<br/>
           Fill <strong>assets/js/auth-overlay.js</strong> or set Netlify build env vars used by <strong>scripts/write-auth-config.mjs</strong> (domain, SPA client ID, optional API audience).<br/>
           Callback:

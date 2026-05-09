@@ -1,5 +1,5 @@
 ================================================================================
-GOOGLE SHEETS + EMAIL — paste into your Sheet (Extensions → Apps Script)
+OPTIONAL LEGACY — Google Sheet + email via Apps Script (skip if you use webhook / Resend)
 ================================================================================
 1. Open the Google Sheet you want to own (your Google account).
 2. Create a tab named exactly: Signups   (or change SHEET_NAME below to match)
