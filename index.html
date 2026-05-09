@@ -1190,9 +1190,6 @@
   });
 </script>
 
-<script>
-  window.SYNTRIX_API_BASE = 'https://api.syntrix.solutions';
-</script>
 <script src="assets/js/auth-config.js"></script>
 <script src="assets/js/auth-overlay.js"></script>
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
@@ -1244,7 +1241,11 @@
       btn.disabled = true;
       btn.innerHTML = 'Submitting...';
 
-      showStatus('Submitting scan...', 2, 'Connecting to api.syntrix.solutions');
+      let apiHost = 'scanner API';
+      try {
+        apiHost = new URL(API_BASE).host;
+      } catch (e) { /* ignore */ }
+      showStatus('Submitting scan...', 2, `Connecting to ${apiHost}`);
 
       // If first request hangs (Render cold start), tell user
       const coldTimer = setTimeout(() => {

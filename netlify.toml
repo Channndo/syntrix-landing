@@ -1,4 +1,4 @@
-# Option A — identity env vars at build time (see scripts/write-auth-config.mjs)
+# Build injects assets/js/auth-config.js from env: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE, SYNTRIX_API_BASE
 # Option B — edit assets/js/auth-overlay.js in git (SPA domain + client ID are public)
 # Waitlist delivery (pick one): SIGNUP_WEBHOOK_URL, or Resend (RESEND_API_KEY + SIGNUP_NOTIFY_TO + RESEND_FROM),
 # or legacy APPS_SCRIPT_URL — see netlify/functions/signup-notify.mjs

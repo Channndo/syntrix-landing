@@ -81,11 +81,14 @@
       <details class="auth-details">
         <summary>Technical setup (operators)</summary>
         <p style="margin:12px 0 0;">
-          Waitlist: set <strong>SIGNUP_WEBHOOK_URL</strong> (optional <strong>SIGNUP_WEBHOOK_SECRET</strong>), or Resend (<strong>RESEND_API_KEY</strong>, <strong>SIGNUP_NOTIFY_TO</strong>, <strong>RESEND_FROM</strong>), or legacy <strong>APPS_SCRIPT_URL</strong> — see <strong>netlify/functions/signup-notify.mjs</strong>. Redeploy Netlify after changing env.<br/><br/>
-          Identity / sign-in:<br/>
-          Fill <strong>assets/js/auth-overlay.js</strong> or set Netlify build env vars used by <strong>scripts/write-auth-config.mjs</strong> (domain, SPA client ID, optional API audience).<br/>
-          Callback:
-          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>
+          <strong>Waitlist</strong> (form above): <strong>SIGNUP_WEBHOOK_URL</strong> (+ optional <strong>SIGNUP_WEBHOOK_SECRET</strong>), or Resend (<strong>RESEND_API_KEY</strong>, <strong>SIGNUP_NOTIFY_TO</strong>, <strong>RESEND_FROM</strong>), or legacy <strong>APPS_SCRIPT_URL</strong> — see <strong>netlify/functions/signup-notify.mjs</strong>. Redeploy after env changes.<br/><br/>
+          <strong>Accounts &amp; scans</strong>: Netlify build env <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_CLIENT_ID</strong>, <strong>AUTH0_AUDIENCE</strong> (must match your API identifier). Optional <strong>SYNTRIX_API_BASE</strong> defaults to api.syntrix.solutions.<br/>
+          In your identity provider (SPA app): allow callbacks + logout URLs +
+          <span style="word-break:break-all;">https://syntrix.solutions/auth-callback.html</span>; allowed web origins include
+          <span style="word-break:break-all;">https://syntrix.solutions</span>; enable RBAC/API if needed for JWT audience.<br/>
+          Scanner (Render API): set <strong>AUTH0_DOMAIN</strong>, <strong>AUTH0_AUDIENCE</strong> (same identifier), optional <strong>AUTH0_ISSUER</strong> if JWT <code>iss</code> does not match https://YOUR_DOMAIN/<br/>
+          Until Stripe checkout is wired, set <strong>SYNTRIX_BILLING_REQUIRED=false</strong> on the scanner so authenticated users can run scans.<br/><br/>
+          Or commit values in <strong>assets/js/auth-overlay.js</strong> for local/overrides after <strong>auth-config.js</strong>.
         </p>
       </details>
     </div>
