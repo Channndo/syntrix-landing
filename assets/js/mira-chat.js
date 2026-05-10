@@ -318,7 +318,7 @@
       '<span class="mira-launcher-desc">Security assistant · ask in plain language</span>' +
       '</span>' +
       '<span class="mira-launcher-icon-wrap">' +
-      '<img src="assets/mira-logo.svg" alt="" width="34" height="34" />' +
+      '<img src="assets/mira-logo.svg" alt="" width="36" height="36" />' +
       '</span>' +
       '</span>';
 
