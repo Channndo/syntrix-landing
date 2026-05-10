@@ -1,0 +1,78 @@
+[project.ts]: detectFrameworks
+[project.ts]: detectBuildSystem
+[project.ts]: detectWorkspaces
+[project.ts]: detectPackageManager
+[project.ts]: detectFrameworksInPath - undefined
+​
+❯ Initial build environment
+config: /Users/chandlerhill/Omnistrata/syntrix/landing/netlify.toml
+context: dev
+cwd: /Users/chandlerhill/Omnistrata/syntrix/landing
+featureFlags: []
+mode: cli
+repositoryRoot: /Users/chandlerhill/Omnistrata/syntrix/landing
+siteId: 63561b30-4fbb-4a53-a6e9-0db82207dea0
+​
+❯ UI build settings
+baseRelDir: true
+​
+❯ Resolved build environment
+branch: main
+buildDir: /Users/chandlerhill/Omnistrata/syntrix/landing
+configPath: /Users/chandlerhill/Omnistrata/syntrix/landing/netlify.toml
+context: dev
+env:
+  - APPS_SCRIPT_SECRET
+  - APPS_SCRIPT_URL
+  - DEPLOY_ID
+  - BUILD_ID
+  - ACCOUNT_ID
+  - REPOSITORY_URL
+  - NETLIFY_LOCAL
+  - HEAD
+  - COMMIT_REF
+  - CACHED_COMMIT_REF
+  - PULL_REQUEST
+  - LANG
+  - LANGUAGE
+  - LC_ALL
+  - GATSBY_TELEMETRY_DISABLED
+  - NEXT_TELEMETRY_DISABLED
+​
+❯ Resolved config
+build:
+  command: npm run build
+  commandOrigin: config
+  publish: /Users/chandlerhill/Omnistrata/syntrix/landing
+  publishOrigin: config
+functionsDirectory: /Users/chandlerhill/Omnistrata/syntrix/landing/netlify/functions
+headers:
+  - for: /*
+    values:
+      Permissions-Policy: accelerometer=(), camera=(), geolocation=(), microphone=(), usb=()
+      Referrer-Policy: strict-origin-when-cross-origin
+      X-Content-Type-Options: nosniff
+      X-Frame-Options: DENY
+  - for: /assets/css/*
+    values:
+      Cache-Control: public, max-age=3600, must-revalidate
+  - for: /assets/js/*
+    values:
+      Cache-Control: public, max-age=3600, must-revalidate
+headersOrigin: config
+redirects:
+  - force: true
+    from: /scanner-api/*
+    status: 200
+    to: https://api.syntrix.solutions/:splat
+redirectsOrigin: config
+ ›   Warning: JSONHTTPError: Forbidden
+ ›       at parseResponse (file:///Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/@netlify/api/lib/methods/response.js:34:39)
+ ›       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+ ›       at async callMethod (file:///Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/@netlify/api/lib/methods/index.js:26:28)
+ ›       at async deploy (file:///Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/netlify-cli/dist/commands/deploy/deploy.js:1016:33)
+ ›       at async BaseCommand.<anonymous> (file:///Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/netlify-cli/dist/commands/deploy/index.js:107:5)
+ ›       at async BaseCommand.parseAsync (/Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/commander/lib/command.js:1092:5)
+ ›       at async runProgram (file:///Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/netlify-cli/dist/utils/run-program.js:13:9)
+ ›       at async main (file:///Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/netlify-cli/bin/run.js:75:5)
+ ›       at async file:///Users/chandlerhill/Omnistrata/syntrix/landing/node_modules/netlify-cli/bin/run.js:86:1
