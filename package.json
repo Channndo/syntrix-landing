@@ -3,7 +3,8 @@
   "private": true,
   "description": "Static marketing + auth flows; Netlify runs build before publish.",
   "scripts": {
-    "build": "node scripts/write-auth-config.mjs"
+    "build": "node scripts/write-auth-config.mjs",
+    "deploy:help": "node scripts/deploy-instructions.mjs"
   },
   "engines": {
     "node": ">=18"

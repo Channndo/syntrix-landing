@@ -3,6 +3,13 @@
 # Waitlist / signup: signup-notify.mjs — optional APPS_SCRIPT_CONSUMER_URL + APPS_SCRIPT_ENTERPRISE_URL (two Sheets).
 # Secrets never belong in git.
 #
+# Deploy: push `main` to github.com/Channndo/syntrix-landing — Netlify builds from Git (no CLI required).
+# If `npx netlify deploy` says JSONHTTPError: Forbidden, that is account/auth — not this file:
+#   npm run deploy:help
+# Common causes: NETLIFY_AUTH_TOKEN set to another user’s or expired token; logged into CLI as a user
+# without deploy access to this site; team SSO. Fix: unset NETLIFY_AUTH_TOKEN, netlify logout/login,
+# or use the site’s linked Git workflow only.
+#
 # Same-origin API proxy (netlify dev + production): browser hits /scanner-api/* here; Netlify forwards to the scanner.
 # api.js uses this on localhost, syntrix.solutions, www, and *.netlify.app so MIRA + scans work without browser CORS to the API host.
 [[redirects]]
