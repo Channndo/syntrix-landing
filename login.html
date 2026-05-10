@@ -95,12 +95,10 @@
   <script>
     (() => {
       const gate = document.getElementById('pw-auth-gate');
-      const pwForm = document.getElementById('pw-login-form');
-      if (window.SYNTRIX_AUTH_ENABLED !== true && gate && pwForm) {
+      const pwSubmit = document.getElementById('pw-login-submit');
+      if (window.SYNTRIX_AUTH_ENABLED !== true && gate) {
         gate.style.display = 'block';
-        pwForm.querySelectorAll('input, button').forEach((el) => {
-          el.disabled = true;
-        });
+        if (pwSubmit) pwSubmit.disabled = true;
       }
     })();
     (async () => {

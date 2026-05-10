@@ -235,12 +235,10 @@
 
     (() => {
       const gate = document.getElementById('pw-auth-gate');
-      const pwForm = document.getElementById('pw-signup-form');
-      if (window.SYNTRIX_AUTH_ENABLED !== true && gate && pwForm) {
+      const pwSubmit = document.getElementById('pw-su-submit');
+      if (window.SYNTRIX_AUTH_ENABLED !== true && gate) {
         gate.style.display = 'block';
-        pwForm.querySelectorAll('input, button, select').forEach((el) => {
-          el.disabled = true;
-        });
+        if (pwSubmit) pwSubmit.disabled = true;
       }
     })();
     (async () => {
