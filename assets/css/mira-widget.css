@@ -241,19 +241,19 @@
 }
 
 /* --- Chat panel ---
- * Default top clears compact auth nav. Homepage (.syntrix-home) uses a tall sticky bar
- * (64px logo + .nav-inner padding) — panel must start *below* it or it covers the SYNTRIX mark.
+ * Bottom-right stack (like the launcher): grows upward from above the FAB, not from the top of the page.
  */
 .mira-panel {
   position: fixed;
-  top: max(88px, calc(env(safe-area-inset-top, 0px) + 72px));
-  right: max(12px, env(safe-area-inset-right));
-  bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 76px));
+  top: auto;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(92px, calc(env(safe-area-inset-bottom, 0px) + 82px));
   left: auto;
   z-index: 9999;
-  width: min(420px, calc(100vw - 32px));
-  height: auto;
-  max-height: none;
+  width: min(420px, calc(100vw - 24px));
+  height: min(560px, calc(100vh - 120px));
+  max-height: min(560px, calc(100vh - 120px));
+  min-height: 0;
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -266,11 +266,6 @@
 
 .mira-panel[hidden] {
   display: none !important;
-}
-
-/* index.html — sticky nav ≈97px; keep MIRA chrome visually under the bar, aligned with hero content */
-body.syntrix-home .mira-panel {
-  top: max(118px, calc(env(safe-area-inset-top, 0px) + 110px));
 }
 
 .mira-panel-header {
@@ -613,17 +608,13 @@ body.syntrix-home .mira-panel {
   .mira-panel {
     left: 0;
     right: 0;
-    top: max(88px, calc(env(safe-area-inset-top, 0px) + 64px));
-    bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+    top: auto;
+    bottom: max(90px, calc(env(safe-area-inset-bottom, 0px) + 80px));
     width: 100%;
     max-width: none;
-    height: auto;
-    max-height: none;
+    height: min(78vh, 560px);
+    max-height: min(78vh, calc(100vh - 110px));
     border-radius: 16px 16px 0 0;
-  }
-
-  body.syntrix-home .mira-panel {
-    top: max(112px, calc(env(safe-area-inset-top, 0px) + 104px));
   }
 
   .mira-dock {
