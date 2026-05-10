@@ -113,6 +113,35 @@
     return (data && data.message) || 'Request failed';
   }
 
+  function passwordAuthDisabledHelp() {
+    return (
+      'Password sign-up is turned off on the scanner API. Set SYNTRIX_PASSWORD_AUTH=true and SYNTRIX_JWT_SECRET (min 32 characters) on the API host, save environment variables, redeploy the service (e.g. Render), then retry — or contact hello@syntrix.solutions.'
+    );
+  }
+
+  function signupEndpointNotFoundHelp() {
+    const host = apiBase() || '(your API host)';
+    return (
+      'Sign-up endpoint was not found (HTTP 404). The scanner API may need a redeploy on Render, or the site may be pointing at the wrong API. ' +
+      `Confirm POST /api/auth/password/register exists — open ${host}/docs in the browser.`
+    );
+  }
+
+  function explainRegisterFailure(status, data) {
+    const detail = formatApiError(data);
+    if (status === 403) {
+      if (/password authentication is disabled|disabled on this api/i.test(detail)) {
+        return passwordAuthDisabledHelp();
+      }
+      return detail || passwordAuthDisabledHelp();
+    }
+    if (status === 404) {
+      if (detail && detail !== 'Not Found') return detail;
+      return signupEndpointNotFoundHelp();
+    }
+    return detail || 'Sign-up failed';
+  }
+
   function ensurePasswordAuthFeature() {
     if (window.SYNTRIX_AUTH_ENABLED !== true) {
       throw new Error('Coming soon — early access only.');
@@ -145,12 +174,7 @@
     const { ok, status, data } = await window.SyntrixApi.apiPost('/api/auth/password/register', body, {
       skipAuth: true,
     });
-    if (status === 404) {
-      throw new Error(
-        'Password sign-up is turned off on the scanner API. Set SYNTRIX_PASSWORD_AUTH=true and SYNTRIX_JWT_SECRET (min 32 characters) on the server hosting your API, then restart — or contact hello@syntrix.solutions.'
-      );
-    }
-    if (!ok) throw new Error(formatApiError(data));
+    if (!ok) throw new Error(explainRegisterFailure(status, data));
     if (data.access_token) window.SyntrixApi.setToken(data.access_token);
     cachedProfile = null;
   }
