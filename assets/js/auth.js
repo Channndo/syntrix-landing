@@ -1,8 +1,6 @@
 (() => {
-  const TOKEN_KEY = 'syntrix_access_token';
-
   function apiBase() {
-    return (window.SYNTRIX_API_BASE || '').replace(/\/$/, '');
+    return window.SyntrixApi ? window.SyntrixApi.apiBase() : (window.SYNTRIX_API_BASE || '').replace(/\/$/, '');
   }
 
   function domain() {
@@ -101,7 +99,7 @@
   }
 
   async function isAuthenticated() {
-    if (localStorage.getItem(TOKEN_KEY)) return true;
+    if (window.SyntrixApi && window.SyntrixApi.getToken()) return true;
     if (!auth0Client) return false;
     return auth0Client.isAuthenticated();
   }
@@ -115,43 +113,50 @@
     return (data && data.message) || 'Request failed';
   }
 
+  function ensurePasswordAuthFeature() {
+    if (window.SYNTRIX_AUTH_ENABLED !== true) {
+      throw new Error('Coming soon — early access only.');
+    }
+    if (!window.SyntrixApi) {
+      throw new Error('API client not loaded; include assets/js/api.js before auth.js.');
+    }
+  }
+
   async function loginWithPassword(email, password) {
-    const r = await fetch(apiBase() + '/api/auth/password/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(formatApiError(data));
-    localStorage.setItem(TOKEN_KEY, data.access_token);
+    ensurePasswordAuthFeature();
+    const { ok, data } = await window.SyntrixApi.apiPost(
+      '/api/auth/password/login',
+      { email, password },
+      { skipAuth: true }
+    );
+    if (!ok) throw new Error(formatApiError(data));
+    if (data.access_token) window.SyntrixApi.setToken(data.access_token);
     cachedProfile = null;
   }
 
   async function registerWithPassword(email, password, firstName, lastName) {
+    ensurePasswordAuthFeature();
     const body = {
       email,
       password,
       first_name: (firstName || '').trim(),
       last_name: (lastName || '').trim(),
     };
-    const r = await fetch(apiBase() + '/api/auth/password/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+    const { ok, status, data } = await window.SyntrixApi.apiPost('/api/auth/password/register', body, {
+      skipAuth: true,
     });
-    const data = await r.json().catch(() => ({}));
-    if (r.status === 404) {
+    if (status === 404) {
       throw new Error(
         'Password sign-up is turned off on the scanner API. Set SYNTRIX_PASSWORD_AUTH=true and SYNTRIX_JWT_SECRET (min 32 characters) on the server hosting your API, then restart — or contact hello@syntrix.solutions.'
       );
     }
-    if (!r.ok) throw new Error(formatApiError(data));
-    localStorage.setItem(TOKEN_KEY, data.access_token);
+    if (!ok) throw new Error(formatApiError(data));
+    if (data.access_token) window.SyntrixApi.setToken(data.access_token);
     cachedProfile = null;
   }
 
   async function getAccessToken() {
-    const stored = localStorage.getItem(TOKEN_KEY);
+    const stored = window.SyntrixApi ? window.SyntrixApi.getToken() : null;
     if (stored) return stored;
     if (!auth0Client) throw new Error('Sign-in is not configured yet');
     const aud = audience();
@@ -160,7 +165,7 @@
   }
 
   async function getProfile() {
-    const stored = localStorage.getItem(TOKEN_KEY);
+    const stored = window.SyntrixApi ? window.SyntrixApi.getToken() : null;
     if (stored) {
       const p = decodeJwtPayload(stored);
       if (p && (p.email || p.sub)) {
@@ -201,7 +206,7 @@
   }
 
   async function logout() {
-    localStorage.removeItem(TOKEN_KEY);
+    if (window.SyntrixApi) window.SyntrixApi.clearToken();
     cachedProfile = null;
     if (!auth0Client) return;
     auth0Client.logout({
@@ -222,5 +227,6 @@
     getProfile,
     login,
     logout,
+    apiBase,
   };
 })();

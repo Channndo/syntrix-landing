@@ -33,6 +33,14 @@
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
 
       <div id="pw-login-card">
+        <div
+          id="pw-auth-gate"
+          class="auth-msg"
+          role="status"
+          style="display: none; margin-bottom: 16px; border-color: var(--line); background: rgba(15, 26, 44, 0.55); color: var(--text-mid);"
+        >
+          Coming soon — early access only
+        </div>
         <form id="pw-login-form" action="#" autocomplete="on">
           <div class="auth-field">
             <label for="pw-login-email">Email</label>
@@ -43,8 +51,8 @@
             <div class="auth-input-password-wrap">
               <input id="pw-login-password" type="password" required autocomplete="current-password" maxlength="256" />
               <button type="button" class="auth-password-toggle" data-password-toggle-for="pw-login-password" aria-label="Show password">
-                <svg class="auth-eye-on" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
-                <svg class="auth-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <svg class="auth-eye-on" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+                <svg class="auth-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
               </button>
             </div>
           </div>
@@ -78,11 +86,23 @@
   </main>
 
   <script src="assets/js/password-toggle.js"></script>
+  <script src="assets/js/config.js"></script>
   <script src="assets/js/auth-config.js"></script>
+  <script src="assets/js/api.js"></script>
   <script src="assets/js/auth-overlay.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
   <script>
+    (() => {
+      const gate = document.getElementById('pw-auth-gate');
+      const pwForm = document.getElementById('pw-login-form');
+      if (window.SYNTRIX_AUTH_ENABLED !== true && gate && pwForm) {
+        gate.style.display = 'block';
+        pwForm.querySelectorAll('input, button').forEach((el) => {
+          el.disabled = true;
+        });
+      }
+    })();
     (async () => {
       const ready = document.getElementById('auth-panel-ready');
       const btn = document.getElementById('login-btn');
@@ -99,6 +119,7 @@
       if (pwForm) {
         pwForm.addEventListener('submit', async (e) => {
           e.preventDefault();
+          if (window.SYNTRIX_AUTH_ENABLED !== true) return;
           err.style.display = 'none';
           try {
             await window.SyntrixAuth.loginWithPassword(
