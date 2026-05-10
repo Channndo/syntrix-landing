@@ -163,11 +163,6 @@
       return;
     }
 
-    if (!hasToken()) {
-      appendMsg('error', 'Sign in to chat with MIRA.', 'mira-msg-error');
-      return;
-    }
-
     hideSuggestionsRow();
 
     appendMsg('user', trimmed);
@@ -377,16 +372,14 @@
     state.messages = [];
     if (!miraChatAllowed()) {
       appendMsg('assistant', getUnavailableMsg());
-    } else if (!hasToken()) {
-      appendMsg(
-        'assistant',
-        'Hi — sign in to chat with MIRA. I explain vulnerabilities, severities, and scan results in plain English.'
-      );
     } else {
-      appendMsg(
-        'assistant',
-        "Hi — I'm MIRA. Ask about findings, threat modeling, or how to remediate what Syntrix reports."
-      );
+      var welcome =
+        "Hi — I'm MIRA. Ask about vulnerabilities, scan findings, severities, or remediation in plain English.";
+      if (hasToken()) {
+        welcome +=
+          " While you're signed in, I keep context from our conversations for more tailored guidance.";
+      }
+      appendMsg('assistant', welcome);
     }
   }
 
