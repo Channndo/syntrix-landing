@@ -74,7 +74,10 @@
       );
     }
     if (!state.statusHttpOk) {
-      return 'The API did not return MIRA status successfully. Confirm the scanner is deployed with /api/mira.';
+      return (
+        'The API did not return MIRA status. Deploy an updated scanner so GET /api/mira/status exists on api.syntrix.solutions ' +
+        'and set SYNTRIX_MIRA_ENABLED. The landing site proxies /scanner-api to that API (see netlify.toml).'
+      );
     }
     return 'MIRA is disabled on this API (SYNTRIX_MIRA_ENABLED).';
   }
@@ -322,6 +325,13 @@
     dock.appendChild(launcher);
     document.body.appendChild(dock);
     document.body.appendChild(panel);
+
+    launcher.addEventListener('mouseenter', function () {
+      launcher.classList.add('mira-launcher--hover');
+    });
+    launcher.addEventListener('mouseleave', function () {
+      launcher.classList.remove('mira-launcher--hover');
+    });
 
     launcher.addEventListener('click', function () {
       togglePanel();

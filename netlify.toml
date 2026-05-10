@@ -17,3 +17,14 @@
 
 [functions]
   directory = "netlify/functions"
+
+# Short TTL so CSS/JS updates reach browsers soon after deploy (filenames are not hashed).
+[[headers]]
+  for = "/assets/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+[[headers]]
+  for = "/assets/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
