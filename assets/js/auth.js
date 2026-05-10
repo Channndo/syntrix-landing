@@ -129,6 +129,12 @@
 
   function explainRegisterFailure(status, data) {
     const detail = formatApiError(data);
+    if (status === 409) {
+      if (/already registered|duplicate/i.test(detail)) {
+        return 'An account with this email already exists. Try signing in instead.';
+      }
+      return detail || 'This email is already registered.';
+    }
     if (status === 403) {
       if (/password authentication is disabled|disabled on this api/i.test(detail)) {
         return passwordAuthDisabledHelp();
