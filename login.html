@@ -132,6 +132,22 @@
       const btn = document.getElementById('login-btn');
       const err = document.getElementById('auth-error');
 
+      /** Same-origin *.html paths only — avoids open redirects (e.g. next=https://evil.com). */
+      function postLoginHref() {
+        try {
+          const q = new URLSearchParams(window.location.search);
+          const next = (q.get('next') || q.get('return') || '').trim();
+          if (!next) return `${window.location.origin}/index.html`;
+          if (/^https?:|^\/\/|^\s*javascript:/i.test(next) || next.includes('..'))
+            return `${window.location.origin}/index.html`;
+          if (!/^[a-zA-Z0-9._/-]+\.html$/.test(next)) return `${window.location.origin}/index.html`;
+          return `${window.location.origin}/${next.replace(/^\//, '')}`;
+        } catch (_e) {
+          return `${window.location.origin}/index.html`;
+        }
+      }
+      const afterLogin = postLoginHref();
+
       await window.SyntrixAuth.init();
 
       const pwForm = document.getElementById('pw-login-form');
@@ -164,7 +180,7 @@
               document.getElementById('sq-ans-1').focus();
               return;
             }
-            window.location.href = `${window.location.origin}/index.html`;
+            window.location.href = afterLogin;
           } catch (ex) {
             err.textContent = ex.message || String(ex);
             err.style.display = 'block';
@@ -195,7 +211,7 @@
             document.getElementById('sq-trust-device').checked,
             loginEmail
           );
-          window.location.href = `${window.location.origin}/index.html`;
+          window.location.href = afterLogin;
         } catch (ex) {
           err.textContent = ex.message || String(ex);
           err.style.display = 'block';

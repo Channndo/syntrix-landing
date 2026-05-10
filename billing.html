@@ -120,6 +120,13 @@
 
       const authed = await window.SyntrixAuth.isAuthenticated();
       if (!authed) {
+        // Password auth uses login.html forms; SSO uses Auth0 redirect.
+        if (typeof window.SyntrixAuth.passwordAuthEnabled === 'function' && window.SyntrixAuth.passwordAuthEnabled()) {
+          window.location.replace(
+            `${window.location.origin}/login.html?next=${encodeURIComponent('billing.html')}`
+          );
+          return;
+        }
         try {
           await window.SyntrixAuth.login('login', `${window.location.origin}${window.location.pathname}`);
         } catch (e) {
