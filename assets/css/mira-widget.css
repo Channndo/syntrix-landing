@@ -15,7 +15,6 @@
 /* --- Dock: single launcher (icon anchored right; hover extends pill left) --- */
 .mira-dock {
   position: fixed;
-  /* Breathing room so the pulse ring (inset -5px) is not clipped by the viewport */
   right: max(12px, env(safe-area-inset-right));
   bottom: max(12px, env(safe-area-inset-bottom));
   padding: 10px 10px 8px 14px;
@@ -40,6 +39,7 @@
   border-radius: 999px;
   font-family: Manrope, system-ui, sans-serif;
   vertical-align: bottom;
+  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mira-launcher:focus {
@@ -52,38 +52,10 @@
   border-radius: 999px;
 }
 
-/* Pulse ring: same border-radius as pill, opacity-only (no scale → stays concentric with logo) */
-.mira-launcher-inner::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  z-index: 0;
-  border-radius: inherit;
-  box-sizing: border-box;
-  border: 2px solid rgba(34, 211, 238, 0.4);
-  pointer-events: none;
-  animation: mira-ring-soft 2.8s ease-in-out infinite;
-}
-
-@keyframes mira-ring-soft {
-  0%,
-  100% {
-    opacity: 0.82;
-    border-color: rgba(34, 211, 238, 0.48);
-  }
-  50% {
-    opacity: 0.28;
-    border-color: rgba(34, 211, 238, 0.22);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mira-launcher-inner::before {
-    animation: none;
-    opacity: 0.45;
-  }
-}
-
+/*
+ * Pulse: animate extra box-shadow rings on the pill itself (always concentric — no ::before drift).
+ * Hover lift lives on .mira-launcher so it never desyncs from the glow.
+ */
 .mira-launcher-inner {
   position: relative;
   z-index: 1;
@@ -92,39 +64,70 @@
   align-items: center;
   justify-content: flex-end;
   box-sizing: border-box;
+  min-width: 72px;
   min-height: 64px;
   padding: 8px 10px;
-  max-width: min(calc(100vw - 52px), 360px);
+  max-width: min(calc(100vw - 48px), 380px);
   border-radius: 999px;
   overflow: visible;
   background: linear-gradient(160deg, rgba(34, 211, 238, 0.22), rgba(6, 182, 212, 0.12));
-  box-shadow:
-    0 10px 36px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(34, 211, 238, 0.45);
-  isolation: isolate;
-  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.24s ease;
+  transition: min-width 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: mira-pill-glow 2.85s ease-in-out infinite;
 }
 
-/* Text expands left of logo; max-width transition (avoid flex-basis hacks that broke hover) */
+@keyframes mira-pill-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 36px rgba(0, 0, 0, 0.42),
+      0 0 0 1px rgba(34, 211, 238, 0.48),
+      0 0 0 3px rgba(34, 211, 238, 0.16),
+      0 0 18px rgba(34, 211, 238, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.48),
+      0 0 0 1px rgba(34, 211, 238, 0.55),
+      0 0 0 9px rgba(34, 211, 238, 0.07),
+      0 0 26px rgba(34, 211, 238, 0.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mira-launcher-inner {
+    animation: none;
+    box-shadow:
+      0 10px 36px rgba(0, 0, 0, 0.42),
+      0 0 0 1px rgba(34, 211, 238, 0.45),
+      0 0 0 4px rgba(34, 211, 238, 0.12);
+  }
+}
+
+/* Label is absolutely positioned + width animates — avoids ultra-narrow flex column (vertical letter garbage). */
 .mira-launcher-copy {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
+  box-sizing: border-box;
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  max-width: min(274px, calc(100vw - 104px));
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
   gap: 4px;
   text-align: right;
-  padding: 2px 0;
+  padding: 0;
   margin: 0;
-  max-width: 0;
   opacity: 0;
-  overflow: hidden;
   transition:
-    max-width 0.34s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.22s ease 0.04s,
-    padding 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+    width 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease 0.05s;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .mira-launcher-copy strong {
@@ -138,48 +141,49 @@
 
 .mira-launcher-desc {
   font-size: 11px;
-  line-height: 1.45;
+  line-height: 1.4;
   color: #93a4c0;
-  max-width: 260px;
+  max-width: min(274px, calc(100vw - 104px));
   white-space: normal;
+  word-wrap: break-word;
 }
 
-/* Pointer devices: grow on hover */
 @media (hover: hover) and (pointer: fine) {
-  .mira-launcher:hover .mira-launcher-inner {
+  .mira-launcher:hover {
     transform: translateY(-2px);
-    box-shadow:
-      0 14px 44px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(34, 211, 238, 0.6);
+  }
+
+  .mira-launcher:hover .mira-launcher-inner {
+    min-width: min(348px, calc(100vw - 36px));
   }
 
   .mira-launcher:hover .mira-launcher-copy {
-    max-width: min(296px, calc(100vw - 120px));
+    width: min(274px, calc(100vw - 104px));
     opacity: 1;
-    padding-left: 16px;
-    padding-right: 6px;
+    pointer-events: auto;
   }
 }
 
-/* Keyboard / focus */
+.mira-launcher:focus-visible {
+  transform: translateY(-2px);
+}
+
 .mira-launcher:focus-visible .mira-launcher-inner {
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.48),
-    0 0 0 1px rgba(34, 211, 238, 0.55);
+  min-width: min(348px, calc(100vw - 36px));
 }
 
 .mira-launcher:focus-visible .mira-launcher-copy {
-  max-width: min(296px, calc(100vw - 120px));
+  width: min(274px, calc(100vw - 104px));
   opacity: 1;
-  padding-left: 16px;
-  padding-right: 6px;
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mira-launcher-inner,
-  .mira-launcher-copy {
-    transition-duration: 0.01ms;
-    transition-delay: 0ms;
+  .mira-launcher-copy,
+  .mira-launcher {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }
 
@@ -584,11 +588,23 @@
 
   @media (hover: hover) and (pointer: fine) {
     .mira-launcher:hover .mira-launcher-copy {
-      max-width: min(296px, calc(100vw - 104px));
+      width: min(260px, calc(100vw - 96px));
+    }
+
+    .mira-launcher:hover .mira-launcher-inner {
+      min-width: min(336px, calc(100vw - 32px));
     }
   }
 
   .mira-launcher:focus-visible .mira-launcher-copy {
-    max-width: min(296px, calc(100vw - 104px));
+    width: min(260px, calc(100vw - 96px));
+  }
+
+  .mira-launcher:focus-visible .mira-launcher-inner {
+    min-width: min(336px, calc(100vw - 32px));
+  }
+
+  .mira-launcher-desc {
+    max-width: min(260px, calc(100vw - 96px));
   }
 }
