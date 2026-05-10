@@ -20,19 +20,78 @@
   </nav>
 
   <main class="auth-main">
-    <div class="auth-card" style="max-width:520px;">
+    <div class="auth-card account-card" style="max-width: 560px;">
       <div class="auth-pill">
         <span class="auth-pill-dot"></span>
         Account
       </div>
-      <h1 style="margin-bottom:16px;">Your account</h1>
-      <p id="profile" class="auth-lede" style="margin-bottom:24px;">Loading…</p>
+      <h1 style="margin-bottom: 16px;">Your account</h1>
+      <p id="profile-lede" class="auth-lede" style="margin-bottom: 20px;">Loading…</p>
+
+      <div id="account-password" class="account-password" hidden>
+        <div class="account-layout">
+          <div class="account-avatar-block">
+            <div class="account-avatar-ring-wrap">
+              <div class="account-avatar-ring" aria-hidden="true">
+                <img id="avatar-img" alt="" width="96" height="96" hidden />
+                <div id="avatar-placeholder" class="account-avatar-placeholder">?</div>
+              </div>
+            </div>
+            <label class="account-upload-label">
+              <input id="avatar-input" type="file" accept="image/png,.png" />
+              Upload PNG
+            </label>
+            <button id="avatar-remove" type="button" class="account-remove-photo auth-btn-primary auth-outline-btn" hidden>
+              Remove photo
+            </button>
+            <p class="account-photo-hint">PNG only, max 512 KB.</p>
+          </div>
+          <div class="account-details">
+            <div class="auth-field" style="margin-bottom: 12px;">
+              <label>Email</label>
+              <p id="acct-email" class="account-readonly"></p>
+            </div>
+            <div class="auth-field-row">
+              <div class="auth-field">
+                <label for="acct-first">First name</label>
+                <input id="acct-first" type="text" maxlength="100" autocomplete="given-name" />
+              </div>
+              <div class="auth-field">
+                <label for="acct-last">Last name</label>
+                <input id="acct-last" type="text" maxlength="100" autocomplete="family-name" />
+              </div>
+            </div>
+            <div class="auth-field" style="margin-bottom: 12px;">
+              <label>Role</label>
+              <p id="acct-role" class="account-readonly"></p>
+            </div>
+            <div class="auth-field" style="margin-bottom: 20px;">
+              <label>Member since</label>
+              <p id="acct-since" class="account-readonly"></p>
+            </div>
+            <div class="account-save-row">
+              <button id="save-profile" type="button" class="auth-btn-primary" style="width: auto; padding: 12px 20px;">
+                Save profile
+              </button>
+              <span id="profile-saved" class="account-saved" hidden>Saved</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="account-idp" class="account-idp" hidden>
+        <p id="idp-summary" class="auth-lede" style="margin-bottom: 20px;"></p>
+        <img id="idp-picture" class="account-idp-picture" alt="" width="80" height="80" hidden />
+      </div>
+
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
-      <div id="acct-actions" hidden class="auth-action-row">
-        <button id="manage-billing" type="button" class="auth-btn-primary" style="width:auto;padding:12px 20px;">Manage billing</button>
+      <div id="acct-actions" hidden class="auth-action-row" style="margin-top: 24px;">
+        <button id="manage-billing" type="button" class="auth-btn-primary" style="width: auto; padding: 12px 20px;">
+          Manage billing
+        </button>
         <button id="logout-btn" type="button" class="auth-btn-primary auth-outline-btn">Sign out</button>
       </div>
-      <div class="auth-footer-links" style="margin-top:28px;text-align:left;">
+      <div class="auth-footer-links" style="margin-top: 28px; text-align: left;">
         <a href="index.html">← Back to Syntrix</a>
       </div>
     </div>
@@ -47,14 +106,93 @@
   <script src="assets/js/billing.js"></script>
   <script>
     (async () => {
-      const profileEl = document.getElementById('profile');
+      const lede = document.getElementById('profile-lede');
       const errEl = document.getElementById('auth-error');
       const actions = document.getElementById('acct-actions');
+      const rootPw = document.getElementById('account-password');
+      const rootIdp = document.getElementById('account-idp');
+
+      let avatarObjectUrl = null;
+
+      function showError(msg) {
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+
+      function formatApiError(data) {
+        const d = data && data.detail;
+        if (typeof d === 'string') return d;
+        if (Array.isArray(d)) {
+          return d.map((x) => (typeof x === 'string' ? x : x.msg || JSON.stringify(x))).join(' ');
+        }
+        return (data && data.message) || 'Request failed';
+      }
+
+      function formatMemberSince(iso) {
+        if (!iso) return '—';
+        try {
+          const d = new Date(iso);
+          return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch {
+          return iso;
+        }
+      }
+
+      function displayName(me) {
+        const fn = (me.first_name || '').trim();
+        const ln = (me.last_name || '').trim();
+        if (fn || ln) return `${fn} ${ln}`.trim();
+        return me.email || 'you';
+      }
+
+      function initialsFromMe(me) {
+        const fn = (me.first_name || '').trim();
+        const ln = (me.last_name || '').trim();
+        if (fn || ln) {
+          const a = fn.charAt(0);
+          const b = ln.charAt(0);
+          return (a + b).toUpperCase() || '?';
+        }
+        const em = me.email || '';
+        return em.charAt(0).toUpperCase() || '?';
+      }
+
+      function revokeAvatarPreview() {
+        if (avatarObjectUrl) {
+          URL.revokeObjectURL(avatarObjectUrl);
+          avatarObjectUrl = null;
+        }
+      }
+
+      async function paintAvatar(me) {
+        const img = document.getElementById('avatar-img');
+        const ph = document.getElementById('avatar-placeholder');
+        revokeAvatarPreview();
+        if (me.has_avatar && window.SyntrixApi) {
+          const r = await window.SyntrixApi.apiAuthorizedFetch('/api/auth/me/avatar');
+          if (r.ok) {
+            const blob = await r.blob();
+            avatarObjectUrl = URL.createObjectURL(blob);
+            img.src = avatarObjectUrl;
+            img.hidden = false;
+            ph.hidden = true;
+            return;
+          }
+        }
+        img.removeAttribute('src');
+        img.hidden = true;
+        ph.textContent = initialsFromMe(me);
+        ph.hidden = false;
+      }
+
+      function setRemoveVisible(me) {
+        document.getElementById('avatar-remove').hidden = !me.has_avatar;
+      }
 
       await window.SyntrixAuth.init();
 
       if (!window.SyntrixAuth.isConfigured()) {
-        profileEl.textContent =
+        lede.textContent =
           'We’re finishing account connections on this deployment. Try again shortly, or email hello@syntrix.solutions for help.';
         return;
       }
@@ -64,16 +202,104 @@
         try {
           await window.SyntrixAuth.login('login', `${window.location.origin}${window.location.pathname}`);
         } catch (e) {
-          errEl.textContent = e.message || String(e);
-          errEl.style.display = 'block';
-          profileEl.textContent = 'Couldn’t start sign-in.';
+          showError(e.message || String(e));
+          lede.textContent = 'Couldn’t start sign-in.';
         }
         return;
       }
 
-      const profile = await window.SyntrixAuth.getProfile();
-      profileEl.textContent = `Signed in as ${profile?.email || profile?.name || 'you'}.`;
       actions.hidden = false;
+
+      const token = window.SyntrixApi && window.SyntrixApi.getToken();
+      if (token) {
+        const meRes = await window.SyntrixApi.apiGet('/api/auth/me');
+        if (meRes.ok) {
+          const me = meRes.data;
+          lede.textContent = `Signed in as ${displayName(me)}.`;
+          rootPw.hidden = false;
+          document.getElementById('acct-email').textContent = me.email || '—';
+          document.getElementById('acct-first').value = me.first_name || '';
+          document.getElementById('acct-last').value = me.last_name || '';
+          document.getElementById('acct-role').textContent =
+            me.role === 'admin' ? 'Administrator' : 'Member';
+          document.getElementById('acct-since').textContent = formatMemberSince(me.created_at);
+          setRemoveVisible(me);
+          await paintAvatar(me);
+
+          document.getElementById('save-profile').addEventListener('click', async () => {
+            const saved = document.getElementById('profile-saved');
+            saved.hidden = true;
+            const body = {
+              first_name: document.getElementById('acct-first').value,
+              last_name: document.getElementById('acct-last').value,
+            };
+            const res = await window.SyntrixApi.apiPatch('/api/auth/profile', body);
+            if (!res.ok) {
+              alert(formatApiError(res.data));
+              return;
+            }
+            const u = res.data;
+            lede.textContent = `Signed in as ${displayName(u)}.`;
+            saved.hidden = false;
+            setTimeout(() => {
+              saved.hidden = true;
+            }, 2500);
+          });
+
+          document.getElementById('avatar-input').addEventListener('change', async () => {
+            const input = document.getElementById('avatar-input');
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            const okType = f.type === 'image/png' || /\.png$/i.test(f.name);
+            if (!okType) {
+              alert('Please choose a PNG file.');
+              return;
+            }
+            if (f.size > 512 * 1024) {
+              alert('PNG must be 512 KB or smaller.');
+              return;
+            }
+            const fd = new FormData();
+            fd.append('file', f);
+            const res = await window.SyntrixApi.apiPostForm('/api/auth/me/avatar', fd);
+            if (!res.ok) {
+              alert(formatApiError(res.data));
+              return;
+            }
+            const u = res.data;
+            setRemoveVisible(u);
+            await paintAvatar(u);
+          });
+
+          document.getElementById('avatar-remove').addEventListener('click', async () => {
+            const res = await window.SyntrixApi.apiPatch('/api/auth/profile', { clear_avatar: true });
+            if (!res.ok) {
+              alert(formatApiError(res.data));
+              return;
+            }
+            const u = res.data;
+            setRemoveVisible(u);
+            await paintAvatar(u);
+          });
+        } else {
+          lede.textContent = 'Could not load your profile from the API.';
+          showError(formatApiError(meRes.data));
+        }
+      } else {
+        const profile = await window.SyntrixAuth.getProfile();
+        const email = profile && (profile.email || profile.name);
+        lede.textContent = email ? `Signed in as ${email}.` : 'Signed in.';
+        rootIdp.hidden = false;
+        const sum = document.getElementById('idp-summary');
+        sum.textContent =
+          'Profile details and PNG photo upload are available when you sign in with email and password on Syntrix. Your identity provider manages this session.';
+        const pic = document.getElementById('idp-picture');
+        if (profile && profile.picture) {
+          pic.src = profile.picture;
+          pic.hidden = false;
+        }
+      }
 
       document.getElementById('manage-billing').addEventListener('click', async () => {
         try {
