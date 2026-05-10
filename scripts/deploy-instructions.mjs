@@ -1,38 +1,64 @@
 #!/usr/bin/env node
 /**
  * Run: npm run deploy:help
- * Prints how production deploy works and why `netlify deploy` may return 403 Forbidden.
  */
 
 var t = process.env.NETLIFY_AUTH_TOKEN;
 if (t && t.length) {
   console.error(
-    '\n[WARNING] NETLIFY_AUTH_TOKEN is set in your environment (' +
+    '\n[WARNING] NETLIFY_AUTH_TOKEN is set (' +
       t.length +
-      ' chars).\n' +
-      'The Netlify CLI uses this token instead of `netlify login`.\n' +
-      'If the token is old, from another account, or read-only, you get JSONHTTPError: Forbidden.\n' +
-      'Fix:  unset NETLIFY_AUTH_TOKEN\n' +
-      '      npx netlify logout && npx netlify login\n' +
-      'Or create a new token at: https://app.netlify.com/user/applications#personal-access-tokens\n' +
-      '(must be the same Netlify user that owns this site / has deploy rights).\n'
+      ' chars). The CLI uses this *instead* of browser login.\n' +
+      'Wrong / stale token ⇒ JSONHTTPError: Forbidden (even right after "authorizing").\n' +
+      '  unset NETLIFY_AUTH_TOKEN\n' +
+      '  npx netlify logout && npx netlify login\n' +
+      'Also check ~/.zshrc and Cursor env for NETLIFY_AUTH_TOKEN exports.\n'
   );
 } else {
-  console.log('\n[INFO] NETLIFY_AUTH_TOKEN is not set — CLI will use netlify login session.\n');
+  console.log('\n[INFO] NETLIFY_AUTH_TOKEN is not set — CLI uses netlify login session.\n');
 }
 
 console.log(
   [
-    '--- Production deploy for syntrix.solutions (no CLI required) ---',
-    'This repo is connected to Netlify. Pushing main triggers a build:',
+    '--- Git: why "Everything up-to-date" ---',
+    'That only means your *current branch* has nothing new vs origin. It does NOT deploy by itself.',
+    'If our commits "never appear", you may need:  git pull origin main',
+    'If you edit scanner/ or the parent `syntrix` repo, that is NOT syntrix-landing — push that repo separately.',
+    'Landing site changes must be committed inside this folder:  syntrix/landing  (repo: Channndo/syntrix-landing)',
     '',
-    '  cd /path/to/syntrix-landing',
-    '  git add -A && git commit -m "Your message" && git push origin main',
+    '--- Deploy prod without CLI (recommended) ---',
+    '  git add -A && git status',
+    '  git commit -m "message" && git push origin main',
+    '  → Netlify build triggers from GitHub. Check app.netlify.com → Deploys.',
     '',
-    'Then open Netlify → your site → Deploys and wait for "Published".',
+    '--- Netlify CLI: recover from Forbidden (do in order) ---',
+    '1) From your Mac terminal (same terminal you use for deploy), NOT only in Cursor if env differs:',
+    '     unset NETLIFY_AUTH_TOKEN',
+    '     npx netlify logout',
     '',
-    'CLI manual deploy (only if you have deploy rights on the site):',
-    '  npx netlify deploy --prod',
+    '2) Remove local link cache (safe — will re-link):',
+    '     cd /path/to/syntrix/landing',
+    '     rm -rf .netlify',
+    '',
+    '3) Login as the Netlify user who OWNS or can deploy `syntrixaisolutions`:',
+    '     npx netlify login',
+    '   Use a private/incognito window if Chrome is logged into the wrong Google/GitHub account.',
+    '',
+    '4) Verify the CLI sees the right person:',
+    '     npx netlify status',
+    '',
+    '5) Re-link this folder and deploy:',
+    '     npx netlify link   # pick syntrixaisolutions / syntrix.solutions',
+    '     npx netlify deploy --prod',
+    '',
+    '--- If still Forbidden: Personal Access Token (same account as site owner) ---',
+    '  Open: https://app.netlify.com/user/applications#personal-access-tokens',
+    '  Create token, then run in the same shell (one deploy):',
+    '     export NETLIFY_AUTH_TOKEN="paste-token-here"',
+    '     cd .../landing && npx netlify deploy --prod',
+    '     unset NETLIFY_AUTH_TOKEN',
+    '',
+    'Team SSO: org may block PATs or CLI — ask team Owner to confirm your seat can deploy.',
     '',
   ].join('\n')
 );
