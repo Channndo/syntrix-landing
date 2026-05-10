@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/mira-widget.css" />
 <style>
   :root {
     --bg: #060B14;
@@ -1116,8 +1117,8 @@
 
       <div class="price-card featured">
         <div class="price-name">Pro</div>
-        <div class="price-amount"><span class="num">$49</span><span class="per">per scan</span></div>
-        <p class="price-desc">Pay-as-you-go for solo devs and small teams shipping agents to prod.</p>
+        <div class="price-amount"><span class="num">$49</span><span class="per">/ month</span></div>
+        <p class="price-desc">For solo devs and small teams shipping agents to prod — billed monthly.</p>
         <ul class="price-features">
           <li>Unlimited targets</li>
           <li>Private results</li>
@@ -1232,11 +1233,15 @@
 <script src="assets/js/auth-overlay.js"></script>
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/js/session-idle.js"></script>
 <script src="assets/js/billing.js"></script>
+<script src="assets/js/mira-chat.js"></script>
 <script>
   // ================== LIVE SCAN CLIENT ==================
   (function () {
-    const API_BASE = window.SYNTRIX_API_BASE;
+    const API_BASE = window.SyntrixApi && typeof window.SyntrixApi.apiBase === 'function'
+      ? window.SyntrixApi.apiBase()
+      : (window.SYNTRIX_API_BASE || 'https://api.syntrix.solutions').replace(/\/$/, '');
     const elTarget  = document.getElementById('scan-target');
     const elType    = document.getElementById('scan-type');
     const elDepth   = document.getElementById('scan-depth');
@@ -1266,7 +1271,11 @@
       }
     }
 
-    initAuthUi();
+    initAuthUi().then(function () {
+      if (window.MiraChat && typeof window.MiraChat.init === 'function') {
+        return window.MiraChat.init();
+      }
+    }).catch(function () {});
 
     if (guestWrap && guestScansEnabled()) {
       guestWrap.style.display = '';

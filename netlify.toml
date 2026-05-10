@@ -2,6 +2,15 @@
 # Option B — edit assets/js/auth-overlay.js in git (SPA domain + client ID are public)
 # Waitlist / signup: signup-notify.mjs — optional APPS_SCRIPT_CONSUMER_URL + APPS_SCRIPT_ENTERPRISE_URL (two Sheets).
 # Secrets never belong in git.
+#
+# Same-origin API proxy (netlify dev + production): browser hits /scanner-api/* here; Netlify forwards to the scanner.
+# api.js uses this on localhost, syntrix.solutions, www, and *.netlify.app so MIRA + scans work without browser CORS to the API host.
+[[redirects]]
+  from = "/scanner-api/*"
+  to = "https://api.syntrix.solutions/:splat"
+  status = 200
+  force = true
+
 [build]
   command = "npm run build"
   publish = "."

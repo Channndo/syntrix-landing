@@ -4,8 +4,32 @@
 (function () {
   var LEGACY_TOKEN_KEY = 'syntrix_access_token';
   var TOKEN_KEY = 'syntrix_jwt';
+  /** Normalized email → device-trust JWT (skip security questions on this browser). */
+  var DEVICE_TRUST_MAP_KEY = 'syntrix_device_trust_by_email';
+  /** Netlify redirect proxy — must match netlify.toml `from` path (no trailing slash). */
+  var SAME_ORIGIN_API_PROXY_PREFIX = '/scanner-api';
+
+  /**
+   * Use https://current-host/scanner-api/... so Netlify proxies to the scanner (see netlify.toml).
+   * Covers localhost (netlify dev), syntrix.solutions (production), and *.netlify.app previews.
+   */
+  function useSameOriginApiProxy() {
+    if (window.SYNTRIX_DISABLE_LOCAL_API_PROXY === true) return false;
+    try {
+      var h = (window.location.hostname || '').toLowerCase();
+      if (h === 'localhost' || h === '127.0.0.1') return true;
+      if (h === 'syntrix.solutions' || h === 'www.syntrix.solutions') return true;
+      if (h.slice(-12) === '.netlify.app') return true;
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 
   function apiBase() {
+    if (useSameOriginApiProxy()) {
+      return String(window.location.origin + SAME_ORIGIN_API_PROXY_PREFIX).replace(/\/$/, '');
+    }
     var raw = window.SYNTRIX_API_BASE || 'https://api.syntrix.solutions';
     return String(raw).replace(/\/$/, '');
   }
@@ -34,6 +58,37 @@
   function clearToken() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(LEGACY_TOKEN_KEY);
+  }
+
+  function getDeviceTrustToken(email) {
+    var em = String(email || '')
+      .trim()
+      .toLowerCase();
+    if (!em) return null;
+    try {
+      var raw = localStorage.getItem(DEVICE_TRUST_MAP_KEY);
+      var map = raw ? JSON.parse(raw) : {};
+      return map[em] || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setDeviceTrustToken(email, token) {
+    var em = String(email || '')
+      .trim()
+      .toLowerCase();
+    if (!em || !token) return;
+    try {
+      var raw = localStorage.getItem(DEVICE_TRUST_MAP_KEY);
+      var map = raw ? JSON.parse(raw) : {};
+      map[em] = token;
+      localStorage.setItem(DEVICE_TRUST_MAP_KEY, JSON.stringify(map));
+    } catch (e) {}
+  }
+
+  function clearDeviceTrustTokens() {
+    localStorage.removeItem(DEVICE_TRUST_MAP_KEY);
   }
 
   /**
@@ -164,5 +219,8 @@
     getToken: getToken,
     setToken: setToken,
     clearToken: clearToken,
+    getDeviceTrustToken: getDeviceTrustToken,
+    setDeviceTrustToken: setDeviceTrustToken,
+    clearDeviceTrustTokens: clearDeviceTrustTokens,
   };
 })();

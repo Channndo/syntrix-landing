@@ -6,6 +6,7 @@
   <title>Sign in · Syntrix</title>
   <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css" />
 </head>
 <body class="auth-page">
   <div class="auth-bg" aria-hidden="true"></div>
@@ -27,7 +28,7 @@
       </div>
       <h1>Welcome back</h1>
       <p class="auth-lede">
-        Sign in with your email and password to run scans and manage your plan.
+        Sign in with your email and password. Sessions end after 5 minutes of inactivity; if you chose &quot;Remember this device&quot; before, you can sign back in quickly with email and password only.
       </p>
 
       <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
@@ -41,23 +42,46 @@
         >
           Coming soon — early access only
         </div>
-        <form id="pw-login-form" action="#" autocomplete="on">
-          <div class="auth-field">
-            <label for="pw-login-email">Email</label>
-            <input id="pw-login-email" type="email" required autocomplete="username" maxlength="320" />
-          </div>
-          <div class="auth-field">
-            <label for="pw-login-password">Password</label>
-            <div class="auth-input-password-wrap">
-              <input id="pw-login-password" type="password" required autocomplete="current-password" maxlength="256" />
-              <button type="button" class="auth-password-toggle" data-password-toggle-for="pw-login-password" aria-label="Show password">
-                <svg class="auth-eye-on" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
-                <svg class="auth-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-              </button>
+        <div id="login-step-password">
+          <form id="pw-login-form" action="#" autocomplete="on">
+            <div class="auth-field">
+              <label for="pw-login-email">Email</label>
+              <input id="pw-login-email" type="email" required autocomplete="username" maxlength="320" />
             </div>
+            <div class="auth-field">
+              <label for="pw-login-password">Password</label>
+              <div class="auth-input-password-wrap">
+                <input id="pw-login-password" type="password" required autocomplete="current-password" maxlength="256" />
+                <button type="button" class="auth-password-toggle" data-password-toggle-for="pw-login-password" aria-label="Show password">
+                  <svg class="auth-eye-on" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+                  <svg class="auth-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" id="pw-login-submit" class="auth-btn-primary">Continue</button>
+          </form>
+        </div>
+        <div id="login-step-security" hidden>
+          <p class="auth-muted-small" style="margin-bottom: 18px;">
+            First time on this browser we verify both answers. Check below if you want this device remembered so you only need email + password next time.
+          </p>
+          <div class="auth-field">
+            <label id="sq-label-1" for="sq-ans-1">Question 1</label>
+            <input id="sq-ans-1" type="text" autocomplete="off" maxlength="256" />
           </div>
-          <button type="submit" id="pw-login-submit" class="auth-btn-primary">Sign in</button>
-        </form>
+          <div class="auth-field">
+            <label id="sq-label-2" for="sq-ans-2">Question 2</label>
+            <input id="sq-ans-2" type="text" autocomplete="off" maxlength="256" />
+          </div>
+          <div class="auth-field auth-field--checkbox">
+            <label class="auth-checkbox-label">
+              <input id="sq-trust-device" type="checkbox" />
+              Remember this device — skip security questions next time on this browser
+            </label>
+          </div>
+          <button type="button" id="sq-submit" class="auth-btn-primary">Complete sign-in</button>
+          <button type="button" id="sq-back" class="auth-btn-primary auth-outline-btn" style="margin-top: 12px;">Back</button>
+        </div>
       </div>
 
       <div class="auth-divider"></div>
@@ -92,6 +116,8 @@
   <script src="assets/js/auth-overlay.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/mira-chat.js"></script>
+  <script src="assets/js/mira-boot.js"></script>
   <script>
     (() => {
       const gate = document.getElementById('pw-auth-gate');
@@ -114,16 +140,30 @@
         ready.hidden = false;
       }
 
+      let loginChallengeToken = null;
+
       if (pwForm) {
         pwForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           if (window.SYNTRIX_AUTH_ENABLED !== true) return;
           err.style.display = 'none';
           try {
-            await window.SyntrixAuth.loginWithPassword(
+            const result = await window.SyntrixAuth.loginWithPassword(
               document.getElementById('pw-login-email').value.trim(),
               document.getElementById('pw-login-password').value
             );
+            if (result && result.requires_security_questions && result.challenge_token && result.questions) {
+              loginChallengeToken = result.challenge_token;
+              const qs = result.questions;
+              document.getElementById('sq-label-1').textContent = qs[0] && qs[0].text ? qs[0].text : 'Question 1';
+              document.getElementById('sq-label-2').textContent = qs[1] && qs[1].text ? qs[1].text : 'Question 2';
+              document.getElementById('sq-ans-1').value = '';
+              document.getElementById('sq-ans-2').value = '';
+              document.getElementById('login-step-password').hidden = true;
+              document.getElementById('login-step-security').hidden = false;
+              document.getElementById('sq-ans-1').focus();
+              return;
+            }
             window.location.href = `${window.location.origin}/index.html`;
           } catch (ex) {
             err.textContent = ex.message || String(ex);
@@ -131,6 +171,44 @@
           }
         });
       }
+
+      document.getElementById('sq-submit').addEventListener('click', async () => {
+        err.style.display = 'none';
+        if (!loginChallengeToken) {
+          err.textContent = 'Session expired — enter your email and password again.';
+          err.style.display = 'block';
+          return;
+        }
+        const a1 = document.getElementById('sq-ans-1').value.trim();
+        const a2 = document.getElementById('sq-ans-2').value.trim();
+        if (!a1 || !a2) {
+          err.textContent = 'Answer both security questions.';
+          err.style.display = 'block';
+          return;
+        }
+        try {
+          const loginEmail = document.getElementById('pw-login-email').value.trim();
+          await window.SyntrixAuth.completeLoginSecurity(
+            loginChallengeToken,
+            a1,
+            a2,
+            document.getElementById('sq-trust-device').checked,
+            loginEmail
+          );
+          window.location.href = `${window.location.origin}/index.html`;
+        } catch (ex) {
+          err.textContent = ex.message || String(ex);
+          err.style.display = 'block';
+        }
+      });
+
+      document.getElementById('sq-back').addEventListener('click', () => {
+        loginChallengeToken = null;
+        const td = document.getElementById('sq-trust-device');
+        if (td) td.checked = false;
+        document.getElementById('login-step-security').hidden = true;
+        document.getElementById('login-step-password').hidden = false;
+      });
 
       btn.addEventListener('click', async () => {
         err.style.display = 'none';

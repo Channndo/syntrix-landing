@@ -6,6 +6,7 @@
   <title>Account · Syntrix</title>
   <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css" />
 </head>
 <body class="auth-page">
   <div class="auth-bg" aria-hidden="true"></div>
@@ -103,7 +104,9 @@
   <script src="assets/js/auth-overlay.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/session-idle.js"></script>
   <script src="assets/js/billing.js"></script>
+  <script src="assets/js/mira-chat.js"></script>
   <script>
     (async () => {
       const lede = document.getElementById('profile-lede');
@@ -309,6 +312,10 @@
         }
       });
       document.getElementById('logout-btn').addEventListener('click', () => window.SyntrixAuth.logout());
+
+      try {
+        if (window.MiraChat) await window.MiraChat.init();
+      } catch (e) {}
     })();
   </script>
 </body>

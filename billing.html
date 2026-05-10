@@ -6,6 +6,7 @@
   <title>Billing · Syntrix</title>
   <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css" />
 </head>
 <body class="auth-page">
   <div class="auth-bg" aria-hidden="true"></div>
@@ -20,21 +21,52 @@
   </nav>
 
   <main class="auth-main">
-    <div class="auth-card" style="max-width:520px;">
+    <div class="auth-card auth-card--wide billing-card">
       <div class="auth-pill">
         <span class="auth-pill-dot"></span>
-        Plans
+        Billing
       </div>
-      <h1 style="margin-bottom:12px;">Choose a plan</h1>
-      <p class="auth-lede" style="margin-bottom:24px;">
-        Subscriptions unlock automated scans and private results. You’ll check out securely with our payment provider.
+      <h1 style="margin-bottom: 12px;">Plans &amp; subscription</h1>
+      <p class="auth-lede" style="margin-bottom: 20px;">
+        Subscriptions unlock automated scans and private results. When you choose a plan, you’ll go to <strong>Stripe Checkout</strong> (hosted by Stripe) to enter card or bank details — payment fields are not collected on this page.
       </p>
-      <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
-      <div id="billing-actions" hidden class="auth-action-row">
-        <button id="buy-pro" type="button" class="auth-btn-primary" style="width:auto;padding:12px 20px;">Pro</button>
-        <button id="buy-team" type="button" class="auth-btn-primary" style="width:auto;padding:12px 20px;">Team</button>
+
+      <div id="billing-current" class="billing-current" hidden>
+        <p class="billing-current-label">Current status</p>
+        <p id="billing-status-line" class="billing-current-text"></p>
+        <button id="open-portal" type="button" class="auth-btn-primary auth-outline-btn billing-portal-btn">
+          Manage subscription &amp; invoices
+        </button>
       </div>
-      <div class="auth-footer-links" style="margin-top:28px;text-align:left;">
+
+      <div id="auth-error" class="auth-msg auth-msg--error" role="alert"></div>
+
+      <div class="billing-plan-grid" id="billing-actions" hidden>
+        <div class="billing-plan billing-plan--pro">
+          <h2 class="billing-plan-title">Pro</h2>
+          <p class="billing-plan-price">$49<span class="billing-plan-period">/month</span></p>
+          <p class="billing-plan-lede">Individuals and small teams getting continuous coverage.</p>
+          <ul class="billing-plan-list">
+            <li>Automated scans on a recurring schedule</li>
+            <li>Private results and trend history</li>
+            <li>Email support</li>
+          </ul>
+          <button id="buy-pro" type="button" class="auth-btn-primary billing-plan-cta">Subscribe — Pro</button>
+        </div>
+        <div class="billing-plan billing-plan--team">
+          <h2 class="billing-plan-title">Team</h2>
+          <p class="billing-plan-price">$499<span class="billing-plan-period">/month</span></p>
+          <p class="billing-plan-lede">Shared workspace with collaboration features.</p>
+          <ul class="billing-plan-list">
+            <li>Everything in Pro</li>
+            <li>Multiple seats and shared visibility</li>
+            <li>Priority support path</li>
+          </ul>
+          <button id="buy-team" type="button" class="auth-btn-primary billing-plan-cta">Subscribe — Team</button>
+        </div>
+      </div>
+
+      <div class="auth-footer-links" style="margin-top: 28px; text-align: left;">
         <a href="index.html">← Back to Syntrix</a>
       </div>
     </div>
@@ -46,11 +78,33 @@
   <script src="assets/js/auth-overlay.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/session-idle.js"></script>
   <script src="assets/js/billing.js"></script>
+  <script src="assets/js/mira-chat.js"></script>
   <script>
     (async () => {
       const errEl = document.getElementById('auth-error');
       const actions = document.getElementById('billing-actions');
+      const current = document.getElementById('billing-current');
+      const statusLine = document.getElementById('billing-status-line');
+
+      function friendlyPlan(id) {
+        if (!id) return '';
+        const s = String(id).toLowerCase();
+        if (s.includes('team')) return 'Team';
+        if (s.includes('pro')) return 'Pro';
+        return id;
+      }
+
+      function formatPeriodEnd(iso) {
+        if (!iso) return '';
+        try {
+          const d = new Date(iso);
+          return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        } catch {
+          return '';
+        }
+      }
 
       await window.SyntrixAuth.init();
 
@@ -77,20 +131,60 @@
 
       actions.hidden = false;
 
+      const tok = window.SyntrixApi && window.SyntrixApi.getToken();
+      if (tok) {
+        const me = await window.SyntrixApi.apiGet('/api/auth/me');
+        if (me.ok && me.data && me.data.subscription) {
+          const sub = me.data.subscription;
+          const st = (sub.status || 'inactive').toLowerCase();
+          const plan = friendlyPlan(sub.plan_id);
+          const end = formatPeriodEnd(sub.current_period_end);
+          let line = '';
+          if (st === 'active' || st === 'trialing') {
+            line = plan
+              ? `Active — ${plan} plan`
+              : 'Active subscription';
+            if (end) line += ` · Renews or ends ${end}`;
+          } else {
+            line = 'No active subscription — choose a plan below.';
+          }
+          statusLine.textContent = line;
+          current.hidden = false;
+        }
+      }
+
+      document.getElementById('open-portal').addEventListener('click', async () => {
+        errEl.style.display = 'none';
+        try {
+          await window.SyntrixBilling.openPortal();
+        } catch (err) {
+          errEl.style.display = 'block';
+          errEl.textContent = err.message || String(err);
+        }
+      });
+
       document.getElementById('buy-pro').addEventListener('click', async () => {
+        errEl.style.display = 'none';
         try {
           await window.SyntrixBilling.startCheckout('pro');
         } catch (err) {
-          alert(err.message || String(err));
+          errEl.style.display = 'block';
+          errEl.textContent = err.message || String(err);
         }
       });
       document.getElementById('buy-team').addEventListener('click', async () => {
+        errEl.style.display = 'none';
         try {
           await window.SyntrixBilling.startCheckout('team');
         } catch (err) {
-          alert(err.message || String(err));
+          errEl.style.display = 'block';
+          errEl.textContent = err.message || String(err);
         }
       });
+
+      try {
+        if (window.MiraChat) await window.MiraChat.init();
+      } catch (e) {}
     })();
   </script>
 </body>

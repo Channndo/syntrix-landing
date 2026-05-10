@@ -104,6 +104,12 @@
     return auth0Client.isAuthenticated();
   }
 
+  function markJustSignedIn() {
+    try {
+      sessionStorage.setItem('syntrix_just_signed_in', '1');
+    } catch (e) {}
+  }
+
   function formatApiError(data) {
     const d = data && data.detail;
     if (typeof d === 'string') return d;
@@ -159,11 +165,15 @@
 
   async function loginWithPassword(email, password) {
     ensurePasswordAuthFeature();
-    const { ok, status, data } = await window.SyntrixApi.apiPost(
-      '/api/auth/password/login',
-      { email, password },
-      { skipAuth: true }
-    );
+    const em = String(email || '')
+      .trim()
+      .toLowerCase();
+    const body = { email: em, password };
+    const dt = window.SyntrixApi.getDeviceTrustToken(em);
+    if (dt) body.device_trust_token = dt;
+    const { ok, status, data } = await window.SyntrixApi.apiPost('/api/auth/password/login', body, {
+      skipAuth: true,
+    });
     if (!ok) {
       const detail = formatApiError(data);
       if (status === 401 && /invalid credentials/i.test(detail)) {
@@ -171,23 +181,132 @@
       }
       throw new Error(detail);
     }
-    if (data.access_token) window.SyntrixApi.setToken(data.access_token);
+    if (data.password_change_required && data.change_session_token) {
+      try {
+        sessionStorage.setItem('syntrix_pw_change_token', data.change_session_token);
+        sessionStorage.setItem('syntrix_pw_change_reason', data.reason || '');
+        sessionStorage.setItem('syntrix_pw_change_email', em);
+      } catch (e) {}
+      window.location.href = `${window.location.origin}/change-password.html`;
+      return data;
+    }
+    if (data.requires_security_questions && data.challenge_token) {
+      return data;
+    }
+    if (data.access_token) {
+      window.SyntrixApi.setToken(data.access_token);
+      markJustSignedIn();
+    }
     cachedProfile = null;
+    return data;
   }
 
-  async function registerWithPassword(email, password, firstName, lastName) {
+  async function completeLoginSecurity(challengeToken, answer1, answer2, trustDevice, loginEmail) {
+    ensurePasswordAuthFeature();
+    const { ok, status, data } = await window.SyntrixApi.apiPost(
+      '/api/auth/password/login/security',
+      {
+        challenge_token: challengeToken,
+        answer1: answer1 || '',
+        answer2: answer2 || '',
+        trust_device: Boolean(trustDevice),
+      },
+      { skipAuth: true }
+    );
+    if (!ok) {
+      const detail = formatApiError(data);
+      if (status === 401 && /incorrect security/i.test(detail)) {
+        throw new Error('Those answers do not match what we have on file.');
+      }
+      throw new Error(detail);
+    }
+    if (data.password_change_required && data.change_session_token) {
+      try {
+        sessionStorage.setItem('syntrix_pw_change_token', data.change_session_token);
+        sessionStorage.setItem('syntrix_pw_change_reason', data.reason || '');
+        const raw =
+          (typeof loginEmail === 'string' && loginEmail) ||
+          (document.getElementById('pw-login-email') &&
+            document.getElementById('pw-login-email').value) ||
+          '';
+        sessionStorage.setItem('syntrix_pw_change_email', String(raw).trim().toLowerCase());
+      } catch (e) {}
+      window.location.href = `${window.location.origin}/change-password.html`;
+      return data;
+    }
+    if (data.access_token) {
+      window.SyntrixApi.setToken(data.access_token);
+      markJustSignedIn();
+    }
+    if (trustDevice && data.device_trust_token && loginEmail) {
+      window.SyntrixApi.setDeviceTrustToken(
+        String(loginEmail).trim().toLowerCase(),
+        data.device_trust_token
+      );
+    }
+    cachedProfile = null;
+    return data;
+  }
+
+  async function changePassword(currentPassword, newPassword) {
+    ensurePasswordAuthFeature();
+    let changeTok = null;
+    try {
+      changeTok = sessionStorage.getItem('syntrix_pw_change_token');
+    } catch (e) {}
+    const body = {
+      current_password: currentPassword,
+      new_password: newPassword,
+    };
+    if (changeTok) body.change_session_token = changeTok;
+    const { ok, status, data } = await window.SyntrixApi.apiPost('/api/auth/password/change', body, {
+      skipAuth: Boolean(changeTok),
+    });
+    if (!ok) {
+      const detail = formatApiError(data);
+      if (status === 400 && /password_reused|password reused/i.test(detail)) {
+        throw new Error(
+          'Choose a new password you have not used recently (last 24 passwords are remembered).'
+        );
+      }
+      if (status === 401 && /incorrect current password/i.test(detail)) {
+        throw new Error('Current password is incorrect.');
+      }
+      throw new Error(detail);
+    }
+    if (data.access_token) {
+      window.SyntrixApi.setToken(data.access_token);
+      markJustSignedIn();
+    }
+    try {
+      sessionStorage.removeItem('syntrix_pw_change_token');
+      sessionStorage.removeItem('syntrix_pw_change_reason');
+      sessionStorage.removeItem('syntrix_pw_change_email');
+    } catch (e) {}
+    cachedProfile = null;
+    return data;
+  }
+
+  async function registerWithPassword(email, password, firstName, lastName, security) {
     ensurePasswordAuthFeature();
     const body = {
       email,
       password,
       first_name: (firstName || '').trim(),
       last_name: (lastName || '').trim(),
+      security_q1_id: security.security_q1_id,
+      security_q2_id: security.security_q2_id,
+      security_answer1: security.security_answer1,
+      security_answer2: security.security_answer2,
     };
     const { ok, status, data } = await window.SyntrixApi.apiPost('/api/auth/password/register', body, {
       skipAuth: true,
     });
     if (!ok) throw new Error(explainRegisterFailure(status, data));
-    if (data.access_token) window.SyntrixApi.setToken(data.access_token);
+    if (data.access_token) {
+      window.SyntrixApi.setToken(data.access_token);
+      markJustSignedIn();
+    }
     cachedProfile = null;
   }
 
@@ -242,7 +361,10 @@
   }
 
   async function logout() {
-    if (window.SyntrixApi) window.SyntrixApi.clearToken();
+    if (window.SyntrixApi) {
+      window.SyntrixApi.clearToken();
+      window.SyntrixApi.clearDeviceTrustTokens();
+    }
     cachedProfile = null;
     if (auth0Client) {
       auth0Client.logout({
@@ -254,6 +376,12 @@
     window.location.reload();
   }
 
+  /** After 5 min idle, session-idle.js clears JWT only; refresh UI without wiping Remember-this-device. */
+  function invalidateSessionForIdle() {
+    cachedProfile = null;
+    window.location.reload();
+  }
+
   window.SyntrixAuth = {
     init,
     isConfigured,
@@ -261,12 +389,15 @@
     passwordAuthEnabled,
     validatePasswordPolicy,
     loginWithPassword,
+    completeLoginSecurity,
+    changePassword,
     registerWithPassword,
     isAuthenticated,
     getAccessToken,
     getProfile,
     login,
     logout,
+    invalidateSessionForIdle,
     apiBase,
   };
 })();

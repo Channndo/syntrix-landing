@@ -6,6 +6,7 @@
   <title>Create account · Syntrix</title>
   <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css" />
 </head>
 <body class="auth-page">
   <div class="auth-bg" aria-hidden="true"></div>
@@ -81,6 +82,30 @@
           <p id="pw-su-requirements" class="auth-muted-small" style="margin:0 0 16px;font-size:13px;line-height:1.45;">
             Requirements: 12+ characters · letters · numbers · one or more symbols (not spaces).
           </p>
+          <p class="auth-section-title" style="margin-top:8px;">Security questions</p>
+          <p class="auth-muted-small" style="margin-bottom:16px;">
+            Pick two different questions and answers you’ll remember. Answers are stored with Argon2 like your password — not plaintext.
+          </p>
+          <div class="auth-field-row">
+            <div class="auth-field">
+              <label for="pw-sq1">Question 1</label>
+              <select id="pw-sq1" required></select>
+            </div>
+            <div class="auth-field">
+              <label for="pw-sq2">Question 2</label>
+              <select id="pw-sq2" required></select>
+            </div>
+          </div>
+          <div class="auth-field-row">
+            <div class="auth-field">
+              <label for="pw-sa1">Answer 1</label>
+              <input id="pw-sa1" type="text" required autocomplete="off" maxlength="256" />
+            </div>
+            <div class="auth-field">
+              <label for="pw-sa2">Answer 2</label>
+              <input id="pw-sa2" type="text" required autocomplete="off" maxlength="256" />
+            </div>
+          </div>
           <div class="auth-field">
             <label for="pw-referral">How did you hear about us?</label>
             <select id="pw-referral" required>
@@ -216,6 +241,7 @@
   </main>
 
   <script src="assets/js/password-toggle.js"></script>
+  <script src="assets/js/security-questions.js"></script>
   <script src="assets/js/signup-notify.js"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/auth-config.js"></script>
@@ -223,6 +249,8 @@
   <script src="assets/js/auth-overlay.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/mira-chat.js"></script>
+  <script src="assets/js/mira-boot.js"></script>
   <script>
     function referralValue(selectEl, otherInput) {
       let v = selectEl.value;
@@ -321,6 +349,63 @@
 
       await window.SyntrixAuth.init();
 
+      (function setupSecurityQuestionSelects() {
+        const qs = window.SYNTRIX_SECURITY_QUESTIONS || [];
+        const s1 = document.getElementById('pw-sq1');
+        const s2 = document.getElementById('pw-sq2');
+        if (!s1 || !s2 || !qs.length) return;
+
+        function placeholderOption() {
+          const pad = document.createElement('option');
+          pad.value = '';
+          pad.disabled = true;
+          pad.textContent = 'Choose…';
+          return pad;
+        }
+
+        function fillQuestion1() {
+          s1.innerHTML = '';
+          const pad = placeholderOption();
+          pad.selected = true;
+          s1.appendChild(pad);
+          qs.forEach((text, i) => {
+            const o = document.createElement('option');
+            o.value = String(i);
+            o.textContent = text;
+            s1.appendChild(o);
+          });
+        }
+
+        /** Question 2 never lists the option chosen for question 1. */
+        function rebuildQuestion2Options() {
+          const prev = s2.value;
+          const exclude =
+            s1.value === '' ? null : parseInt(s1.value, 10);
+          s2.innerHTML = '';
+          const pad = placeholderOption();
+          pad.selected = true;
+          s2.appendChild(pad);
+          qs.forEach((text, i) => {
+            if (exclude !== null && !Number.isNaN(exclude) && i === exclude) return;
+            const o = document.createElement('option');
+            o.value = String(i);
+            o.textContent = text;
+            s2.appendChild(o);
+          });
+          if (
+            prev &&
+            prev !== s1.value &&
+            [...s2.options].some((opt) => opt.value === prev)
+          ) {
+            s2.value = prev;
+          }
+        }
+
+        fillQuestion1();
+        rebuildQuestion2Options();
+        s1.addEventListener('change', rebuildQuestion2Options);
+      })();
+
       const pwForm = document.getElementById('pw-signup-form');
       const pwErr = document.getElementById('pw-su-error');
 
@@ -354,8 +439,32 @@
           const first = document.getElementById('pw-su-first').value.trim();
           const last = document.getElementById('pw-su-last').value.trim();
           const email = document.getElementById('pw-su-email').value.trim();
+          const q1 = parseInt(document.getElementById('pw-sq1').value, 10);
+          const q2 = parseInt(document.getElementById('pw-sq2').value, 10);
+          const a1 = document.getElementById('pw-sa1').value.trim();
+          const a2 = document.getElementById('pw-sa2').value.trim();
+          if (Number.isNaN(q1) || Number.isNaN(q2)) {
+            pwErr.textContent = 'Choose both security questions.';
+            pwErr.style.display = 'block';
+            return;
+          }
+          if (q1 === q2) {
+            pwErr.textContent = 'Choose two different security questions.';
+            pwErr.style.display = 'block';
+            return;
+          }
+          if (a1.length < 2 || a2.length < 2) {
+            pwErr.textContent = 'Each security answer must be at least 2 characters.';
+            pwErr.style.display = 'block';
+            return;
+          }
           try {
-            await window.SyntrixAuth.registerWithPassword(email, p1, first, last);
+            await window.SyntrixAuth.registerWithPassword(email, p1, first, last, {
+              security_q1_id: q1,
+              security_q2_id: q2,
+              security_answer1: a1,
+              security_answer2: a2,
+            });
             try {
               await window.SyntrixWaitlist.submitSignupLead({
                 email,
@@ -373,7 +482,7 @@
             } catch (notifyErr) {
               console.warn('signup-notify', notifyErr);
             }
-            window.location.href = `${window.location.origin}/index.html`;
+            window.location.href = `${window.location.origin}/signup-welcome.html`;
           } catch (ex) {
             pwErr.textContent = ex.message || String(ex);
             pwErr.style.display = 'block';

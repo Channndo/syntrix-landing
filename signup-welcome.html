@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account created · Syntrix</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
+  <link rel="stylesheet" href="assets/auth-ui.css" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css" />
+</head>
+<body class="auth-page">
+  <div class="auth-bg" aria-hidden="true"></div>
+  <div class="auth-glow" aria-hidden="true"></div>
+
+  <nav class="auth-nav">
+    <a class="brand-auth" href="index.html">
+      <img src="assets/syntrix-logo-solid.png" alt="" />
+      SYNTRIX
+    </a>
+    <a class="link-muted" href="login.html">Sign in</a>
+  </nav>
+
+  <main class="auth-main">
+    <div class="auth-card" style="max-width: 480px;">
+      <div class="auth-pill">
+        <span class="auth-pill-dot"></span>
+        Welcome
+      </div>
+      <h1 style="margin-bottom: 16px;">Your account is ready</h1>
+      <p class="auth-lede" style="margin-bottom: 28px;">
+        You’re signed up. Next, open the sign-in page and log in with your email, password, and security answers when prompted.
+      </p>
+      <div class="auth-action-row" style="flex-direction: column; align-items: stretch; gap: 12px;">
+        <a href="login.html" class="auth-btn-primary" style="text-align: center; text-decoration: none; display: block;">Go to sign in</a>
+        <a href="index.html" class="auth-btn-primary auth-outline-btn" style="text-align: center; text-decoration: none; display: block;">Back to Syntrix home</a>
+      </div>
+      <div class="auth-footer-links" style="margin-top: 28px; text-align: left;">
+        <p class="auth-muted-small" style="margin: 0;">Tip: bookmark the sign-in page so you can get back quickly.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth-config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script>
+    // Registration stores a token briefly; clear it so the next step is explicit sign-in on login.html.
+    if (window.SyntrixApi && window.SyntrixApi.clearToken) window.SyntrixApi.clearToken();
+  </script>
+  <script src="assets/js/mira-chat.js"></script>
+  <script src="assets/js/mira-boot.js"></script>
+</body>
+</html>
