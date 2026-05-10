@@ -4,7 +4,8 @@
   "description": "Static marketing + auth flows; Netlify runs build before publish.",
   "scripts": {
     "build": "node scripts/write-auth-config.mjs",
-    "deploy:help": "node scripts/deploy-instructions.mjs"
+    "deploy:help": "node scripts/deploy-instructions.mjs",
+    "trigger:build": "node scripts/trigger-netlify-build.mjs"
   },
   "engines": {
     "node": ">=18"
