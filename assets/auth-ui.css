@@ -332,16 +332,20 @@ html, body { margin: 0; padding: 0; }
 }
 
 .auth-input-password-wrap input {
-  padding-right: 48px;
+  padding-right: 14px;
+  transition: padding-right 0.2s ease;
+}
+
+.auth-input-password-wrap.has-value input {
+  padding-right: 52px;
 }
 
 .auth-password-toggle {
   position: absolute;
-  right: 8px;
+  right: 4px;
   top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: none;
   border-radius: 8px;
@@ -351,17 +355,36 @@ html, body { margin: 0; padding: 0; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s, background 0.15s;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.94);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    color 0.15s,
+    background 0.15s;
+}
+
+.auth-input-password-wrap.has-value .auth-password-toggle {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
 }
 
 .auth-password-toggle:hover {
   color: var(--cyan);
-  background: rgba(34, 211, 238, 0.08);
+  background: rgba(34, 211, 238, 0.06);
+}
+
+.auth-password-toggle:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
 }
 
 .auth-password-toggle svg {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
