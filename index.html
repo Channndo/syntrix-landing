@@ -1126,7 +1126,7 @@
           <li>CI integration · GitHub Action</li>
           <li>Email support</li>
         </ul>
-        <a href="billing.html" class="price-cta" data-plan="pro">Start Pro</a>
+        <a href="signup.html?next=billing.html" class="price-cta" data-plan="pro">Start Pro</a>
       </div>
 
       <div class="price-card">
@@ -1140,7 +1140,7 @@
           <li>SSO · Audit log</li>
           <li>Priority support</li>
         </ul>
-        <a href="billing.html" class="price-cta" data-plan="team">Start Team</a>
+        <a href="signup.html?next=billing.html" class="price-cta" data-plan="team">Start Team</a>
       </div>
     </div>
   </div>
@@ -1180,6 +1180,7 @@
           <li><a href="#platform">Platform</a></li>
           <li><a href="#checks">Checks</a></li>
           <li><a href="#pricing">Pricing</a></li>
+          <li><a href="signup.html?next=billing.html">Create account (Pro / Team)</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -1628,6 +1629,13 @@
               return;
             }
             if (!authed) {
+              if (
+                typeof window.SyntrixAuth.passwordAuthEnabled === 'function' &&
+                window.SyntrixAuth.passwordAuthEnabled()
+              ) {
+                window.location.href = `${window.location.origin}/signup.html?next=${encodeURIComponent('billing.html')}`;
+                return;
+              }
               try {
                 await window.SyntrixAuth.login('signup', `${window.location.origin}/index.html#pricing`);
               } catch (e) {

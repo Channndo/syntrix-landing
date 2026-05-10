@@ -237,15 +237,20 @@
   display: none !important;
 }
 
-/* --- Chat panel --- */
+/* --- Chat panel ---
+ * Top aligns with the main site header band (~logo row); bottom clears the docked FAB.
+ * (Previously bottom-only anchoring made the panel float with its top near mid-viewport.)
+ */
 .mira-panel {
   position: fixed;
+  top: max(100px, calc(env(safe-area-inset-top, 0px) + 84px));
   right: max(12px, env(safe-area-inset-right));
-  /* Above docked FAB (FAB sits ~bottom 14px + launcher height) */
-  bottom: max(108px, calc(env(safe-area-inset-bottom, 0px) + 94px));
+  bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 88px));
+  left: auto;
   z-index: 9999;
   width: min(420px, calc(100vw - 32px));
-  height: min(560px, calc(100vh - 180px));
+  height: auto;
+  max-height: none;
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -600,10 +605,12 @@
   .mira-panel {
     left: 0;
     right: 0;
-    bottom: 0;
+    top: max(88px, calc(env(safe-area-inset-top, 0px) + 64px));
+    bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
     width: 100%;
     max-width: none;
-    height: min(88vh, 640px);
+    height: auto;
+    max-height: none;
     border-radius: 16px 16px 0 0;
   }
 

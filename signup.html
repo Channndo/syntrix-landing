@@ -6,7 +6,7 @@
   <title>Create account · Syntrix</title>
   <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
-  <link rel="stylesheet" href="assets/css/mira-widget.css?v=mira10" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css?v=mira12" />
 </head>
 <body class="auth-page">
   <div class="auth-bg" aria-hidden="true"></div>
@@ -17,7 +17,7 @@
       <img src="assets/syntrix-logo-solid.png" alt="" />
       SYNTRIX
     </a>
-    <a class="link-muted" href="login.html">Already have an account?</a>
+    <a class="link-muted" id="signup-to-login" href="login.html">Already have an account?</a>
   </nav>
 
   <main class="auth-main">
@@ -27,6 +27,9 @@
         Secure sign-up
       </div>
       <h1>Create your account</h1>
+      <p id="signup-billing-nudge" class="auth-msg" role="status" style="display: none; margin-bottom: 14px; border-color: rgba(34, 211, 238, 0.35); background: rgba(12, 40, 54, 0.45); color: var(--text-mid);">
+        You need an account before <strong>Pro</strong> or <strong>Team</strong> checkout. Complete the form below, then you’ll go to billing to pay.
+      </p>
       <p class="auth-lede">
         Create an email and password account for scans, or submit enterprise details below for team follow-up.
       </p>
@@ -274,6 +277,40 @@
       const btn = document.getElementById('signup-btn');
       const err = document.getElementById('auth-error');
 
+      function safePostSignupUrl() {
+        try {
+          const q = new URLSearchParams(window.location.search);
+          const next = (q.get('next') || q.get('return') || '').trim();
+          if (!next) return `${window.location.origin}/signup-welcome.html`;
+          if (/^https?:|^\/\/|^\s*javascript:/i.test(next) || next.includes('..')) {
+            return `${window.location.origin}/signup-welcome.html`;
+          }
+          if (!/^[a-zA-Z0-9._/-]+\.html$/.test(next)) {
+            return `${window.location.origin}/signup-welcome.html`;
+          }
+          return `${window.location.origin}/${next.replace(/^\//, '')}`;
+        } catch (_e) {
+          return `${window.location.origin}/signup-welcome.html`;
+        }
+      }
+
+      const qsInit = new URLSearchParams(window.location.search);
+      const nextInit = (qsInit.get('next') || qsInit.get('return') || '').trim();
+      if (nextInit.toLowerCase().indexOf('billing') !== -1) {
+        const nu = document.getElementById('signup-billing-nudge');
+        if (nu) nu.style.display = 'block';
+      }
+      const signupToLogin = document.getElementById('signup-to-login');
+      if (signupToLogin && nextInit) {
+        if (
+          !/^https?:|^\/\/|^javascript:/i.test(nextInit) &&
+          !nextInit.includes('..') &&
+          /^[a-zA-Z0-9._/-]+\.html$/.test(nextInit)
+        ) {
+          signupToLogin.href = `${window.location.origin}/login.html?next=${encodeURIComponent(nextInit)}`;
+        }
+      }
+
       document.getElementById('pw-referral').addEventListener('change', () => {
         document.getElementById('pw-referral-other-wrap').hidden =
           document.getElementById('pw-referral').value !== '__other__';
@@ -482,7 +519,7 @@
             } catch (notifyErr) {
               console.warn('signup-notify', notifyErr);
             }
-            window.location.href = `${window.location.origin}/signup-welcome.html`;
+            window.location.href = safePostSignupUrl();
           } catch (ex) {
             pwErr.textContent = ex.message || String(ex);
             pwErr.style.display = 'block';

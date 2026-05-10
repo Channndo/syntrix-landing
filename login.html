@@ -6,7 +6,7 @@
   <title>Sign in · Syntrix</title>
   <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
-  <link rel="stylesheet" href="assets/css/mira-widget.css?v=mira10" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css?v=mira12" />
 </head>
 <body class="auth-page">
   <div class="auth-bg" aria-hidden="true"></div>
@@ -17,7 +17,7 @@
       <img src="assets/syntrix-logo-solid.png" alt="" />
       SYNTRIX
     </a>
-    <a class="link-muted" href="signup.html">Need an account?</a>
+    <a class="link-muted" id="login-to-signup" href="signup.html">Need an account?</a>
   </nav>
 
   <main class="auth-main">
@@ -147,6 +147,20 @@
         }
       }
       const afterLogin = postLoginHref();
+
+      const signupFromLogin = document.getElementById('login-to-signup');
+      if (signupFromLogin) {
+        const qn = new URLSearchParams(window.location.search);
+        const nx = (qn.get('next') || qn.get('return') || '').trim();
+        if (
+          nx &&
+          !/^https?:|^\/\/|^javascript:/i.test(nx) &&
+          !nx.includes('..') &&
+          /^[a-zA-Z0-9._/-]+\.html$/.test(nx)
+        ) {
+          signupFromLogin.href = `${window.location.origin}/signup.html?next=${encodeURIComponent(nx)}`;
+        }
+      }
 
       await window.SyntrixAuth.init();
 

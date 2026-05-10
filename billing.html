@@ -6,7 +6,7 @@
   <title>Billing · Syntrix</title>
   <link rel="icon" type="image/png" sizes="192x192" href="assets/syntrix-favicon.png" />
   <link rel="stylesheet" href="assets/auth-ui.css" />
-  <link rel="stylesheet" href="assets/css/mira-widget.css?v=mira10" />
+  <link rel="stylesheet" href="assets/css/mira-widget.css?v=mira12" />
 </head>
 <body class="auth-page">
   <div class="auth-bg" aria-hidden="true"></div>
@@ -123,7 +123,7 @@
         // Password auth uses login.html forms; SSO uses Auth0 redirect.
         if (typeof window.SyntrixAuth.passwordAuthEnabled === 'function' && window.SyntrixAuth.passwordAuthEnabled()) {
           window.location.replace(
-            `${window.location.origin}/login.html?next=${encodeURIComponent('billing.html')}`
+            `${window.location.origin}/signup.html?next=${encodeURIComponent('billing.html')}`
           );
           return;
         }
