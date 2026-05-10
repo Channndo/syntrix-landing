@@ -62,6 +62,19 @@
     }
   }
 
+  /** Never block MIRA launcher forever on a hung /api/mira/status request */
+  function fetchStatusWithTimeout(ms) {
+    var cap = typeof ms === 'number' && ms > 0 ? ms : 12000;
+    return Promise.race([
+      fetchStatus(),
+      new Promise(function (resolve) {
+        setTimeout(function () {
+          resolve({ responded: false, httpOk: false, enabled: false });
+        }, cap);
+      }),
+    ]);
+  }
+
   function miraChatAllowed() {
     return state.statusResponded && state.statusHttpOk && state.miraEnabled;
   }
@@ -355,7 +368,13 @@
         togglePanel();
       }
     });
+  }
 
+  function seedWelcomeMessage() {
+    var wrap = document.querySelector('.mira-messages');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    state.messages = [];
     if (!miraChatAllowed()) {
       appendMsg('assistant', getUnavailableMsg());
     } else if (!hasToken()) {
@@ -424,12 +443,15 @@
     if (state.started) return;
     state.started = true;
 
-    var st = await fetchStatus();
+    // Mount FAB + panel shell immediately so the launcher never depends on API latency.
+    buildUI();
+
+    var st = await fetchStatusWithTimeout(12000);
     state.statusResponded = st.responded;
     state.statusHttpOk = st.httpOk;
     state.miraEnabled = st.enabled;
 
-    buildUI();
+    seedWelcomeMessage();
     updateDisclaimer();
     syncComposerAvailability();
 
