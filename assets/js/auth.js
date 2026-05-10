@@ -153,12 +153,18 @@
 
   async function loginWithPassword(email, password) {
     ensurePasswordAuthFeature();
-    const { ok, data } = await window.SyntrixApi.apiPost(
+    const { ok, status, data } = await window.SyntrixApi.apiPost(
       '/api/auth/password/login',
       { email, password },
       { skipAuth: true }
     );
-    if (!ok) throw new Error(formatApiError(data));
+    if (!ok) {
+      const detail = formatApiError(data);
+      if (status === 401 && /invalid credentials/i.test(detail)) {
+        throw new Error('Email or password is incorrect.');
+      }
+      throw new Error(detail);
+    }
     if (data.access_token) window.SyntrixApi.setToken(data.access_token);
     cachedProfile = null;
   }
@@ -232,10 +238,14 @@
   async function logout() {
     if (window.SyntrixApi) window.SyntrixApi.clearToken();
     cachedProfile = null;
-    if (!auth0Client) return;
-    auth0Client.logout({
-      logoutParams: { returnTo: `${window.location.origin}/index.html` },
-    });
+    if (auth0Client) {
+      auth0Client.logout({
+        logoutParams: { returnTo: `${window.location.origin}/index.html` },
+      });
+      return;
+    }
+    // Password JWT only: no Auth0 redirect — reload so nav / scan UI re-checks auth state.
+    window.location.reload();
   }
 
   window.SyntrixAuth = {

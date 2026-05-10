@@ -955,6 +955,16 @@
         <h3>No audit trail you can trust</h3>
         <p>If the agent can write its own logs, the logs don't survive contact with an attacker. Most agent stacks ship with no tamper-evidence at all.</p>
       </div>
+      <div class="problem-cell">
+        <div class="problem-num">07</div>
+        <h3>Retrieval poisoning (RAG)</h3>
+        <p>Indexed docs and tickets can carry adversarial chunks that steer answers, leak secrets across tenants, or weaponize citations — without touching your main prompt.</p>
+      </div>
+      <div class="problem-cell">
+        <div class="problem-num">08</div>
+        <h3>Unbounded tool fan-out</h3>
+        <p>One approved action triggers chains of nested or parallel tool calls you never reviewed. Blast radius grows combinatorially while approvals stay stuck on the first hop.</p>
+      </div>
     </div>
   </div>
 </section>
