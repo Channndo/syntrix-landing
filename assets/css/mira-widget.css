@@ -15,9 +15,10 @@
 /* --- Dock: single launcher (icon anchored right; hover extends pill left) --- */
 .mira-dock {
   position: fixed;
-  right: max(28px, env(safe-area-inset-right));
-  bottom: max(28px, env(safe-area-inset-bottom));
-  padding: 16px 18px 14px 22px;
+  /* Lift clear of browser bottom UI + macOS dock / safe-area (was clipping FAB at viewport edge). */
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(56px, calc(env(safe-area-inset-bottom, 0px) + 40px));
+  padding: 16px 18px 18px 22px;
   z-index: 9998;
   display: flex;
   flex-direction: column;
@@ -240,7 +241,8 @@
 .mira-panel {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
-  bottom: 118px;
+  /* Sit above FAB; scales with home-indicator safe area */
+  bottom: max(152px, calc(env(safe-area-inset-bottom, 0px) + 124px));
   z-index: 9999;
   width: min(420px, calc(100vw - 32px));
   height: min(560px, calc(100vh - 180px));
