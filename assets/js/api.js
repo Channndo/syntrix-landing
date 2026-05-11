@@ -11,14 +11,15 @@
 
   /**
    * Use https://current-host/scanner-api/... so Netlify proxies to the scanner (see netlify.toml).
-   * Covers localhost (netlify dev), syntrix.solutions (production), and *.netlify.app previews.
+   * Localhost + Netlify previews only: production uses the API host directly so long requests are not
+   * cut off by Netlify’s rewrite proxy timeout (~26s), which breaks MIRA/Ollama chat.
    */
   function useSameOriginApiProxy() {
     if (window.SYNTRIX_DISABLE_LOCAL_API_PROXY === true) return false;
     try {
       var h = (window.location.hostname || '').toLowerCase();
+      if (h === 'syntrix.solutions' || h === 'www.syntrix.solutions') return false;
       if (h === 'localhost' || h === '127.0.0.1') return true;
-      if (h === 'syntrix.solutions' || h === 'www.syntrix.solutions') return true;
       if (h.slice(-12) === '.netlify.app') return true;
       return false;
     } catch (e) {
