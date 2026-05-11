@@ -989,7 +989,7 @@
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
   }, { threshold: 0.08 });
-  document.querySelectorAll('section, .hero-terminal').forEach(el => {
+  document.querySelectorAll('section, .hero-terminal, main.reveal').forEach(el => {
     el.classList.add('reveal'); io.observe(el);
   });
 
