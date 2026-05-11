@@ -876,9 +876,17 @@
     <p class="section-sub">The full Syntrix documentation is in progress. While we get it written, the live API reference is available below.</p>
     <div class="pillars" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
       <div class="pillar">
-        <h3>API Reference</h3>
-        <p>Live OpenAPI/Swagger UI for the Syntrix scanner API. Includes every endpoint, request/response schema, and try-it-out controls.</p>
-        <div class="pillar-tag"><a href="https://api.syntrix.solutions/docs" target="_blank" rel="noopener noreferrer">Open API Reference →</a></div>
+        <h3>API</h3>
+        <p>
+          Production keeps <strong>interactive</strong> Swagger/Redoc <strong>off by default</strong> (less drive-by abuse against
+          documented endpoints). Operators can enable it on a deployment with <code>SYNTRIX_ENABLE_API_DOCS=true</code>, or
+          integrate against the same REST surface without the explorer.
+        </p>
+        <div class="pillar-tag">
+          <a href="https://api.syntrix.solutions/health" target="_blank" rel="noopener noreferrer">API health →</a>
+          <span style="display:inline-block;width:12px"></span>
+          <a href="https://api.syntrix.solutions/docs" target="_blank" rel="noopener noreferrer">API explorer (if enabled) →</a>
+        </div>
       </div>
       <div class="pillar">
         <h3>Need help integrating?</h3>
