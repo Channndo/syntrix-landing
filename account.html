@@ -35,7 +35,7 @@
             <div class="account-avatar-ring-wrap">
               <div class="account-avatar-ring" aria-hidden="true">
                 <img id="avatar-img" alt="" width="96" height="96" hidden />
-                <div id="avatar-placeholder" class="account-avatar-placeholder">?</div>
+                <div id="avatar-placeholder" class="account-avatar-placeholder" aria-hidden="true"></div>
               </div>
             </div>
             <label class="account-upload-label">
@@ -171,25 +171,68 @@
         }
       }
 
-      async function paintAvatar(me) {
+      async function paintAvatar(me, previewFile) {
         const img = document.getElementById('avatar-img');
         const ph = document.getElementById('avatar-placeholder');
         revokeAvatarPreview();
+        img.onload = null;
+        img.onerror = null;
+
+        function showInitials() {
+          img.removeAttribute('src');
+          img.hidden = true;
+          ph.textContent = initialsFromMe(me);
+          ph.hidden = false;
+        }
+
+        function attachBlobUrl(url) {
+          avatarObjectUrl = url;
+          ph.textContent = '';
+          img.hidden = true;
+          ph.hidden = false;
+          img.onload = function () {
+            img.onload = null;
+            img.onerror = null;
+            ph.textContent = '';
+            ph.hidden = true;
+            img.hidden = false;
+          };
+          img.onerror = function () {
+            img.onload = null;
+            img.onerror = null;
+            URL.revokeObjectURL(url);
+            if (avatarObjectUrl === url) avatarObjectUrl = null;
+            showInitials();
+          };
+          img.src = url;
+          if (img.complete && img.naturalWidth > 0) {
+            img.onload();
+          }
+        }
+
+        if (previewFile instanceof Blob) {
+          attachBlobUrl(URL.createObjectURL(previewFile));
+          return;
+        }
+
         if (me.has_avatar && window.SyntrixApi) {
           const r = await window.SyntrixApi.apiAuthorizedFetch('/api/auth/me/avatar');
           if (r.ok) {
+            const ct = (r.headers.get('content-type') || '').toLowerCase();
+            if (!ct.includes('image/png')) {
+              showInitials();
+              return;
+            }
             const blob = await r.blob();
-            avatarObjectUrl = URL.createObjectURL(blob);
-            img.src = avatarObjectUrl;
-            img.hidden = false;
-            ph.hidden = true;
+            if (!blob || blob.size === 0) {
+              showInitials();
+              return;
+            }
+            attachBlobUrl(URL.createObjectURL(blob));
             return;
           }
         }
-        img.removeAttribute('src');
-        img.hidden = true;
-        ph.textContent = initialsFromMe(me);
-        ph.hidden = false;
+        showInitials();
       }
 
       function setRemoveVisible(me) {
@@ -291,7 +334,7 @@
             }
             const u = res.data;
             setRemoveVisible(u);
-            await paintAvatar(u);
+            await paintAvatar(u, f);
           });
 
           document.getElementById('avatar-remove').addEventListener('click', async () => {
