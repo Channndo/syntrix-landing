@@ -876,6 +876,27 @@
 <main class="wrap reveal" style="padding:48px 0 96px;">
 <h1>Changelog</h1>
     <p style="font-family:var(--mono);font-size:13px;color:var(--text-3);margin:0 0 40px;">Last updated: May 11, 2026</p>
+    <h2 style="font-size:22px;margin-bottom:16px;">v0.2.1 — May 11, 2026</h2>
+    <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
+      Hardening, billing tiers, reproducibility metadata, MIRA prompt clarity, and new marketing content. Scanner changes deploy with the API; site updates deploy with Netlify.
+    </p>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Scanner API</p>
+    <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 20px;">
+      <li>HTTP security headers (nosniff, frame options, referrer policy, permissions-policy; optional HSTS via <code>SYNTRIX_HSTS_MAX_AGE</code>).</li>
+      <li>Optional host allowlist: <code>SYNTRIX_TRUSTED_HOSTS</code> (Trusted Host middleware).</li>
+      <li>CORS allow-headers narrowed to <code>Authorization</code>, <code>Content-Type</code>, <code>Accept</code>.</li>
+      <li>MIRA: <code>Content-Length</code> guard on <code>POST /api/mira/chat</code> (configurable <code>SYNTRIX_MIRA_MAX_BODY_BYTES</code>).</li>
+      <li>Guest scans: per-IP rolling hourly submit cap (<code>SYNTRIX_GUEST_SCAN_IP_MAX_PER_HOUR</code>).</li>
+      <li>Scan engine: bounded httpx connection pools for outbound probes.</li>
+      <li>Stripe plan tier: <code>subscription.plan_tier</code> on <code>GET /api/auth/me</code> (<code>none</code> / <code>pro</code> / <code>team</code>), plus Team-only stub <code>POST /api/team/webhooks/register</code> (signed webhooks to follow).</li>
+      <li>Reproducibility: each check documents a short <strong>methodology</strong> on <code>GET /api/checks</code>; completed scans store optional <code>scanner_build</code> (from <code>SYNTRIX_SCANNER_BUILD</code> or <code>RENDER_GIT_COMMIT</code>) surfaced on scan status JSON.</li>
+      <li>MIRA system prompt: clarified that normal product questions and suggested quick prompts should be answered fully; pasted or tool content remains untrusted for policy overrides.</li>
+    </ul>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Marketing site</p>
+    <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 16px;">
+      <li>New <strong>About</strong> page (<code>about.html</code>) — product overview, environments, scan philosophy, severity guide, MIRA, principles, responsible use, privacy pointer, AI disclaimer, evolution, contact/disclosure.</li>
+      <li>Documentation hub links to About; footer <strong>Resources</strong> includes About across main pages.</li>
+    </ul>
     <h2 style="font-size:22px;margin-bottom:16px;">v0.2.0 — May 11, 2026 · milestone</h2>
     <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
       Ship milestone: public marketing site and scanner API crossed a bar we’re willing to stand behind — coherent positioning, deliberate security choices, and operator hooks for what comes next.
@@ -922,6 +943,7 @@
         <h4>Resources</h4>
         <ul>
           <li><a href="documentation.html">Documentation</a></li>
+          <li><a href="about.html">About</a></li>
           <li><a href="owasp-agentic-top-10.html">OWASP Agentic Top 10</a></li>
           <li><a href="threat-reports.html">Threat reports</a></li>
           <li><a href="changelog.html">Changelog</a></li>
