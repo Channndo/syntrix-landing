@@ -1,5 +1,8 @@
 /**
- * Shared browser client for api.syntrix.solutions — JSON, credentials omitted, Bearer JWT when set.
+ * Thin browser client for api.syntrix.solutions — JSON + optional Bearer JWT.
+ *
+ * Production marketing host talks straight to the API (Netlify proxy times out on long MIRA chats).
+ * Same-origin ``/scanner-api`` only for local / Netlify previews unless you disable it explicitly.
  */
 (function () {
   var LEGACY_TOKEN_KEY = 'syntrix_access_token';

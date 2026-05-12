@@ -1,6 +1,8 @@
 /**
- * MIRA — in-app cybersecurity assistant (Ollama via Syntrix API).
- * Docked launcher + floating FAB + panel (chat-tool style).
+ * MIRA — the floating security assistant on syntrix.solutions.
+ *
+ * I keep this file boring on purpose: one widget, one API shape, no framework roulette.
+ * Flow: status ping → if enabled, mount launcher + panel; attachments become JSON on send.
  */
 (function () {
   var LS_TOUR = 'syntrix_mira_tour_choice';
