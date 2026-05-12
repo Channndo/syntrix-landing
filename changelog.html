@@ -876,7 +876,18 @@
 <main class="wrap reveal" style="padding:48px 0 96px;">
 <h1>Changelog</h1>
     <p style="font-family:var(--mono);font-size:13px;color:var(--text-3);margin:0 0 40px;">Last updated: May 11, 2026</p>
-    <h2 style="font-size:22px;margin-bottom:16px;">v0.1.0 — May 11, 2026</h2>
+    <h2 style="font-size:22px;margin-bottom:16px;">v0.2.0 — May 11, 2026 · milestone</h2>
+    <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
+      Ship milestone: public marketing site and scanner API crossed a bar we’re willing to stand behind — coherent positioning, deliberate security choices, and operator hooks for what comes next.
+    </p>
+    <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;">
+      <li>Primary contact and audit bookings: <strong style="color:var(--text);">chandler@syntrix.solutions</strong> across the site.</li>
+      <li>Nav and footer Syntrix logo links home from every marketing page.</li>
+      <li>MIRA: attach images, PDFs, and text files in the in-site assistant.</li>
+      <li>Scanner: structured MIRA observability (<code>mira_obs</code> JSON logs), rate-limit visibility, latency metrics (upstream wall, time-to-first-token, handler total).</li>
+      <li>Interactive OpenAPI/Swagger on production off by default; enable with <code>SYNTRIX_ENABLE_API_DOCS=true</code> when needed.</li>
+    </ul>
+    <h2 style="font-size:22px;margin:48px 0 16px;">v0.1.0 — May 11, 2026</h2>
     <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;">
       <li>Initial public release.</li>
       <li>10 security checks covering network exposure, transport security, authentication enforcement, prompt injection, permission scoping, sampling abuse, rate limiting, error disclosure, and CORS misconfiguration.</li>
