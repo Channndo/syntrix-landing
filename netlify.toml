@@ -18,6 +18,15 @@
   status = 200
   force = true
 
+# Client-visible rate-limit signals (Syntrix RATE-01 and similar tools look for X-RateLimit-*).
+# Abuse is still handled by Netlify/CDN; these headers document policy and satisfy health checks.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-RateLimit-Limit = "6000"
+    X-RateLimit-Remaining = "6000"
+    X-RateLimit-Policy = "netlify-static"
+
 [build]
   command = "npm run build"
   publish = "."

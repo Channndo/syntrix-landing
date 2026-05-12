@@ -45,7 +45,7 @@
             <button id="avatar-remove" type="button" class="account-remove-photo auth-btn-primary auth-outline-btn" hidden>
               Remove photo
             </button>
-            <p class="account-photo-hint">PNG only, max 512 KB.</p>
+            <p class="account-photo-hint">PNG only, max 2 MB.</p>
           </div>
           <div class="account-details">
             <div class="auth-field" style="margin-bottom: 12px;">
@@ -65,6 +65,10 @@
             <div class="auth-field" style="margin-bottom: 12px;">
               <label>Role</label>
               <p id="acct-role" class="account-readonly"></p>
+            </div>
+            <div id="acct-scan-access-wrap" class="auth-field" style="margin-bottom: 12px;" hidden>
+              <label>Scanner access</label>
+              <p id="acct-scan-access" class="account-readonly"></p>
             </div>
             <div class="auth-field" style="margin-bottom: 20px;">
               <label>Member since</label>
@@ -230,7 +234,16 @@
           document.getElementById('acct-first').value = me.first_name || '';
           document.getElementById('acct-last').value = me.last_name || '';
           document.getElementById('acct-role').textContent =
-            me.role === 'admin' ? 'Administrator' : 'Member';
+            me.role === 'admin' ? 'Administrator (sole operator)' : 'Member';
+          const scanWrap = document.getElementById('acct-scan-access-wrap');
+          const scanLine = document.getElementById('acct-scan-access');
+          if (me.scanner_unlimited) {
+            scanWrap.hidden = false;
+            scanLine.textContent =
+              'Unlimited authenticated scans without a paid subscription — only this operator account.';
+          } else {
+            scanWrap.hidden = true;
+          }
           document.getElementById('acct-since').textContent = formatMemberSince(me.created_at);
           setRemoveVisible(me);
           await paintAvatar(me);
@@ -265,8 +278,8 @@
               alert('Please choose a PNG file.');
               return;
             }
-            if (f.size > 512 * 1024) {
-              alert('PNG must be 512 KB or smaller.');
+            if (f.size > 2 * 1024 * 1024) {
+              alert('PNG must be 2 MB or smaller.');
               return;
             }
             const fd = new FormData();

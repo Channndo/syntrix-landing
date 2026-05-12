@@ -138,25 +138,35 @@
 
       actions.hidden = false;
 
+      const openPortalBtn = document.getElementById('open-portal');
       const tok = window.SyntrixApi && window.SyntrixApi.getToken();
       if (tok) {
         const me = await window.SyntrixApi.apiGet('/api/auth/me');
         if (me.ok && me.data && me.data.subscription) {
           const sub = me.data.subscription;
-          const st = (sub.status || 'inactive').toLowerCase();
-          const plan = friendlyPlan(sub.plan_id);
-          const end = formatPeriodEnd(sub.current_period_end);
-          let line = '';
-          if (st === 'active' || st === 'trialing') {
-            line = plan
-              ? `Active — ${plan} plan`
-              : 'Active subscription';
-            if (end) line += ` · Renews or ends ${end}`;
+          if (me.data.scanner_unlimited) {
+            statusLine.textContent =
+              'Operator account — unlimited authenticated scans without a paid Stripe subscription.';
+            current.hidden = false;
+            actions.hidden = true;
+            openPortalBtn.hidden = true;
           } else {
-            line = 'No active subscription — choose a plan below.';
+            openPortalBtn.hidden = false;
+            const st = (sub.status || 'inactive').toLowerCase();
+            const plan = friendlyPlan(sub.plan_id);
+            const end = formatPeriodEnd(sub.current_period_end);
+            let line = '';
+            if (st === 'active' || st === 'trialing') {
+              line = plan
+                ? `Active — ${plan} plan`
+                : 'Active subscription';
+              if (end) line += ` · Renews or ends ${end}`;
+            } else {
+              line = 'No active subscription — choose a plan below.';
+            }
+            statusLine.textContent = line;
+            current.hidden = false;
           }
-          statusLine.textContent = line;
-          current.hidden = false;
         }
       }
 

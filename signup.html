@@ -129,6 +129,7 @@
           <button type="submit" id="pw-su-submit" class="auth-btn-primary">Create account</button>
         </form>
         <p id="pw-su-error" class="auth-feedback error" role="alert" style="display:none;margin-top:16px;"></p>
+        <p id="pw-su-success" class="auth-feedback success" role="status" style="display:none;margin-top:16px;"></p>
       </div>
 
       <div class="auth-divider"></div>
@@ -445,6 +446,7 @@
 
       const pwForm = document.getElementById('pw-signup-form');
       const pwErr = document.getElementById('pw-su-error');
+      const pwOk = document.getElementById('pw-su-success');
 
       if (window.SyntrixAuth.isAuth0Configured()) {
         ready.hidden = false;
@@ -455,6 +457,7 @@
           e.preventDefault();
           if (window.SYNTRIX_AUTH_ENABLED !== true) return;
           pwErr.style.display = 'none';
+          if (pwOk) pwOk.style.display = 'none';
           const p1 = document.getElementById('pw-su-password').value;
           const p2 = document.getElementById('pw-su-password2').value;
           if (p1 !== p2) {
@@ -496,12 +499,21 @@
             return;
           }
           try {
-            await window.SyntrixAuth.registerWithPassword(email, p1, first, last, {
+            if (pwOk) pwOk.style.display = 'none';
+            const regData = await window.SyntrixAuth.registerWithPassword(email, p1, first, last, {
               security_q1_id: q1,
               security_q2_id: q2,
               security_answer1: a1,
               security_answer2: a2,
             });
+            if (regData && regData.account_message && pwOk) {
+              pwErr.style.display = 'none';
+              pwOk.textContent = regData.account_message;
+              pwOk.style.display = 'block';
+              await new Promise(function (r) {
+                setTimeout(r, 3200);
+              });
+            }
             try {
               await window.SyntrixWaitlist.submitSignupLead({
                 email,

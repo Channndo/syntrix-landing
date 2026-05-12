@@ -19,6 +19,7 @@
     { label: 'What do severity levels mean?', prompt: 'Explain Syntrix scan severity levels (critical, high, medium, low) in plain language.' },
     { label: 'How should I read a finding?', prompt: 'How should I interpret and prioritize a Syntrix security finding?' },
     { label: 'Prompt injection basics', prompt: 'What is prompt injection on an MCP or agent endpoint, and how does Syntrix detect it?' },
+    { label: 'Exec summary from screenshots', prompt: 'I attached screenshots of security findings. Please give a concise executive summary for leadership: overall risk in one short paragraph, then the top issues by severity, business impact in plain language, and prioritized next steps. Note anything you cannot read clearly.' },
   ];
 
   /** @type {{ filename: string, mime_type: string, encoding: string, data: string }[]} */

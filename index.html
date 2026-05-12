@@ -982,8 +982,8 @@
     </p>
 
     <div class="scan-card">
-      <input id="scan-target" type="url" class="scan-input"
-        placeholder="https://your-mcp-server.com" autocomplete="off" spellcheck="false" />
+      <input id="scan-target" type="text" class="scan-input"
+        placeholder="https://your-mcp-server.com or 203.0.113.10/mcp" autocomplete="off" spellcheck="false" />
       <div class="scan-controls">
         <select id="scan-type" class="scan-select" aria-label="Scan type">
           <option value="mcp">MCP server</option>
@@ -1311,10 +1311,10 @@
         accessToken = null;
       }
 
-      const target = (elTarget.value || '').trim();
-      if (!target) return showError('Enter a target URL.');
+      let target = (elTarget.value || '').trim();
+      if (!target) return showError('Enter a target URL or host (IP allowed if publicly reachable).');
       if (!/^https?:\/\//i.test(target)) {
-        return showError('Target must start with http:// or https://');
+        target = 'https://' + target;
       }
 
       if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }

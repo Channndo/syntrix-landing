@@ -308,6 +308,7 @@
       markJustSignedIn();
     }
     cachedProfile = null;
+    return data;
   }
 
   async function getAccessToken() {
