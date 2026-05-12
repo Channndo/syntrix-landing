@@ -878,24 +878,24 @@
     <p style="font-family:var(--mono);font-size:13px;color:var(--text-3);margin:0 0 40px;">Last updated: May 12, 2026</p>
     <h2 style="font-size:22px;margin-bottom:16px;">v0.2.1 — May 12, 2026</h2>
     <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
-      Hardening, billing tiers, reproducibility metadata, MIRA prompt clarity, and new marketing content. Scanner changes deploy with the API; site updates deploy with Netlify.
+      Hardening, billing tiers, reproducibility metadata, MIRA prompt clarity, and new marketing content. API and website roll out together when we publish a release.
     </p>
-    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Scanner API</p>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">API and scanner</p>
     <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 20px;">
-      <li>HTTP security headers (nosniff, frame options, referrer policy, permissions-policy; optional HSTS via <code>SYNTRIX_HSTS_MAX_AGE</code>).</li>
-      <li>Optional host allowlist: <code>SYNTRIX_TRUSTED_HOSTS</code> (Trusted Host middleware).</li>
-      <li>CORS allow-headers narrowed to <code>Authorization</code>, <code>Content-Type</code>, <code>Accept</code>.</li>
-      <li>MIRA: <code>Content-Length</code> guard on <code>POST /api/mira/chat</code> (configurable <code>SYNTRIX_MIRA_MAX_BODY_BYTES</code>).</li>
-      <li>Guest scans: per-IP rolling hourly submit cap (<code>SYNTRIX_GUEST_SCAN_IP_MAX_PER_HOUR</code>).</li>
-      <li>Scan engine: bounded httpx connection pools for outbound probes.</li>
-      <li>Stripe plan tier: <code>subscription.plan_tier</code> on <code>GET /api/auth/me</code> (<code>none</code> / <code>pro</code> / <code>team</code>), plus Team-only stub <code>POST /api/team/webhooks/register</code> (signed webhooks to follow).</li>
-      <li>Reproducibility: each check documents a short <strong>methodology</strong> on <code>GET /api/checks</code>; completed scans store optional <code>scanner_build</code> (from <code>SYNTRIX_SCANNER_BUILD</code> or <code>RENDER_GIT_COMMIT</code>) surfaced on scan status JSON.</li>
-      <li>MIRA system prompt: clarified that normal product questions and suggested quick prompts should be answered fully; pasted or tool content remains untrusted for policy overrides.</li>
+      <li>Stronger HTTP security headers (including optional strict transport when your deployment is ready).</li>
+      <li>Optional hostname allowlist for operators who want an extra guardrail on incoming requests.</li>
+      <li>Tighter browser CORS policy for API calls (fewer wildcard headers).</li>
+      <li>MIRA chat: request size limits to reduce abuse and oversized payloads.</li>
+      <li>Guest scans: additional per-IP throttling on top of existing daily limits.</li>
+      <li>Outbound scanning: bounded concurrency so one job cannot exhaust connection pools.</li>
+      <li>Billing: account profile exposes a coarse <strong>plan tier</strong> (none / Pro / Team); Team-only integration endpoint stub for future signed webhooks.</li>
+      <li>Reproducibility: public check catalog includes a short <strong>methodology</strong> blurb per check; completed scans can carry an optional <strong>build stamp</strong> on status for support and auditing.</li>
+      <li>MIRA: system guidance updated so product education and suggested prompts get full answers—including how detection works at a high level—while pasted or tool content is still treated cautiously for policy overrides.</li>
     </ul>
-    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Marketing site</p>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Website</p>
     <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 16px;">
-      <li>New <strong>About</strong> page (<code>about.html</code>) — product overview, environments, scan philosophy, severity guide, MIRA, principles, responsible use, privacy pointer, AI disclaimer, evolution, contact/disclosure.</li>
-      <li>Documentation hub links to About; footer <strong>Resources</strong> includes About across main pages.</li>
+      <li>New <strong>About</strong> page — product overview, environments, scan philosophy, severity guide, MIRA, principles, responsible use, privacy pointer, AI disclaimer, evolution, contact/disclosure.</li>
+      <li>Documentation hub links to About; site footer <strong>Resources</strong> includes About across main pages.</li>
     </ul>
     <h2 style="font-size:22px;margin-bottom:16px;">v0.2.0 — May 11, 2026 · milestone</h2>
     <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
@@ -905,8 +905,8 @@
       <li>Primary contact and audit bookings: <strong style="color:var(--text);">chandler@syntrix.solutions</strong> across the site.</li>
       <li>Nav and footer Syntrix logo links home from every marketing page.</li>
       <li>MIRA: attach images, PDFs, and text files in the in-site assistant.</li>
-      <li>Scanner: structured MIRA observability (<code>mira_obs</code> JSON logs), rate-limit visibility, latency metrics (upstream wall, time-to-first-token, handler total).</li>
-      <li>Interactive OpenAPI/Swagger on production off by default; enable with <code>SYNTRIX_ENABLE_API_DOCS=true</code> when needed.</li>
+      <li>Scanner: operator-visible telemetry for the assistant (latency and volume signals, without raw prompts).</li>
+      <li>Interactive API explorer off by default in production; operators can turn it on when appropriate for support or integration work.</li>
     </ul>
     <h2 style="font-size:22px;margin:48px 0 16px;">v0.1.0 — May 10, 2026</h2>
     <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;">
