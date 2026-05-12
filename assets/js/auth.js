@@ -121,7 +121,7 @@
 
   function passwordAuthDisabledHelp() {
     return (
-      'Password sign-up is turned off on the scanner API. Set SYNTRIX_PASSWORD_AUTH=true and SYNTRIX_JWT_SECRET (min 32 characters) on the API host, save environment variables, redeploy the service (e.g. Render), then retry — or contact hello@syntrix.solutions.'
+      'Password sign-up is turned off on the scanner API. Set SYNTRIX_PASSWORD_AUTH=true and SYNTRIX_JWT_SECRET (min 32 characters) on the API host, save environment variables, redeploy the service (e.g. Render), then retry — or contact chandler@syntrix.solutions.'
     );
   }
 

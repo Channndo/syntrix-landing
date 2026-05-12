@@ -368,15 +368,15 @@
           const code = werr.code || '';
           if (code === 'waitlist_not_configured') {
             entErr.textContent =
-              'Sign-up could not be saved right now. Try again shortly or contact hello@syntrix.solutions.';
+              'Sign-up could not be saved right now. Try again shortly or contact chandler@syntrix.solutions.';
           } else if (code === 'rate_limited') {
             entErr.textContent = 'Too many attempts. Please wait a few minutes.';
           } else if (code === 'delivery_failed') {
             entErr.textContent =
-              'We could not confirm with our systems. Try again or email hello@syntrix.solutions.';
+              'We could not confirm with our systems. Try again or email chandler@syntrix.solutions.';
           } else {
             entErr.textContent =
-              (werr && werr.message) || 'Something went wrong — try again or email hello@syntrix.solutions.';
+              (werr && werr.message) || 'Something went wrong — try again or email chandler@syntrix.solutions.';
           }
           entErr.classList.add('error');
         } finally {

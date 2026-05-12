@@ -1020,7 +1020,7 @@
       <p id="auth-config-banner" class="scan-auth-hint" style="display:none;border:1px solid var(--line-2);border-radius:10px;padding:14px 18px;background:rgba(251,191,36,0.06);color:var(--text-2);line-height:1.55;">
         <strong style="color:var(--text)">Account sign-in is updating.</strong>
         Scans need a signed-in account. When our host finishes connecting authentication, log in here — or get help at
-        <a href="mailto:hello@syntrix.solutions" style="color:var(--cyan);font-weight:600;text-decoration:none;">hello@syntrix.solutions</a>.
+        <a href="mailto:chandler@syntrix.solutions" style="color:var(--cyan);font-weight:600;text-decoration:none;">chandler@syntrix.solutions</a>.
         · <a href="signup.html" style="color:var(--cyan);font-weight:600;text-decoration:none;">Create an account</a>
       </p>
     </div>
@@ -1158,7 +1158,7 @@
           We run scoped penetration tests against agentic systems — voice control, MCP integrations, autonomous subagents, the works. Five business days, OWASP-aligned report, fixed price. No enterprise sales cycle.
         </p>
       </div>
-      <a href="mailto:audit@syntrix.solutions?subject=Pen%20test%20inquiry" class="btn btn-primary">
+      <a href="mailto:chandler@syntrix.solutions?subject=Pen%20test%20inquiry" class="btn btn-primary">
         Book an audit <span class="arrow">→</span>
       </a>
     </div>
@@ -1296,14 +1296,14 @@
 
       if (!guestMode) {
         if (!window.SyntrixAuth.isConfigured()) {
-          return showError('Sign-in isn’t connected on this deployment yet. Use “Continue as guest” below, or Sign up / Log in in the navigation, or contact hello@syntrix.solutions.');
+          return showError('Sign-in isn’t connected on this deployment yet. Use “Continue as guest” below, or Sign up / Log in in the navigation, or contact chandler@syntrix.solutions.');
         }
         try {
           accessToken = await window.SyntrixAuth.getAccessToken();
         } catch (err) {
           const msg = (err && err.message) ? String(err.message) : String(err);
           if (msg.includes('not configured')) {
-            return showError('Sign-in isn’t configured on this site yet. Try “Continue as guest” below, visit the signup page, or contact hello@syntrix.solutions.');
+            return showError('Sign-in isn’t configured on this site yet. Try “Continue as guest” below, visit the signup page, or contact chandler@syntrix.solutions.');
           }
           return showAuthRequiredError();
         }
@@ -1627,7 +1627,7 @@
             if (plan === 'free') return;
             event.preventDefault();
             if (!window.SyntrixAuth.isConfigured()) {
-              showError('Billing needs sign-in to be enabled on this deployment. Visit signup or email hello@syntrix.solutions.');
+              showError('Billing needs sign-in to be enabled on this deployment. Visit signup or email chandler@syntrix.solutions.');
               return;
             }
             if (!authed) {
