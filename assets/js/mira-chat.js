@@ -472,7 +472,7 @@
       '<span class="mira-panel-name">MIRA</span>' +
       '<span class="mira-badge">AI</span>' +
       '</div>' +
-      '<span class="mira-panel-sub">Machine Intelligence &amp; Risk Advisor</span>' +
+      '<span class="mira-panel-sub">Machine Intelligence &amp; Risk Advisor · Mindroot cognitive layer</span>' +
       '</div></div>' +
       '<button type="button" class="mira-panel-close" aria-label="Close chat">&times;</button>' +
       '</div>' +
