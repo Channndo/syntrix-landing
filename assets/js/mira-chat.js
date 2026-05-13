@@ -160,6 +160,34 @@
     wrap.scrollTop = wrap.scrollHeight;
   }
 
+  /** One bubble per uploaded file — separate from the text message so images read clearly in-thread. */
+  function appendUserAttachmentBubble(att) {
+    var wrap = document.querySelector('.mira-messages');
+    if (!wrap || !att) return;
+    var div = document.createElement('div');
+    div.className = 'mira-msg mira-msg-user mira-msg-attach';
+    var mime = String(att.mime_type || '');
+    if (mime.indexOf('image/') === 0 && att.encoding === 'base64' && att.data) {
+      var img = document.createElement('img');
+      img.className = 'mira-attach-preview';
+      img.alt = att.filename || 'Attached image';
+      img.loading = 'lazy';
+      img.src = 'data:' + mime + ';base64,' + att.data;
+      div.appendChild(img);
+      var cap = document.createElement('div');
+      cap.className = 'mira-attach-caption';
+      cap.textContent = att.filename || '';
+      div.appendChild(cap);
+    } else {
+      var label = document.createElement('div');
+      label.className = 'mira-attach-file-label';
+      label.textContent = att.filename || 'Attached file';
+      div.appendChild(label);
+    }
+    wrap.appendChild(div);
+    wrap.scrollTop = wrap.scrollHeight;
+  }
+
   function setTyping(on) {
     var el = document.querySelector('.mira-typing');
     if (el) el.textContent = on ? 'MIRA is thinking…' : '';
@@ -358,18 +386,6 @@
       (hasFiles
         ? 'Please analyze the attached file(s). Focus on anything security-relevant or actionable.'
         : '');
-    var display = userContent;
-    if (hasFiles) {
-      display +=
-        '\n\n📎 ' +
-        pendingAttachments
-          .map(function (a) {
-            return a.filename;
-          })
-          .join(', ');
-    }
-    appendMsg('user', display);
-    state.messages.push({ role: 'user', content: userContent });
 
     var snapshot = pendingAttachments.map(function (a) {
       return {
@@ -379,6 +395,17 @@
         data: a.data,
       };
     });
+
+    if (trimmed) {
+      appendMsg('user', trimmed);
+    }
+    if (hasFiles) {
+      snapshot.forEach(function (a) {
+        appendUserAttachmentBubble(a);
+      });
+    }
+
+    state.messages.push({ role: 'user', content: userContent });
 
     state.loading = true;
     setTyping(true);
@@ -487,11 +514,11 @@
       '<div class="mira-attach-toolbar">' +
       '<input type="file" id="mira-file-input" class="mira-file-input" multiple ' +
       'accept="image/*,.pdf,.txt,.md,.markdown,.csv,.json,.xml,.yaml,.yml,.log,.env" />' +
-      '<button type="button" class="mira-attach-btn" aria-label="Attach images or documents">' +
+      '<button type="button" class="mira-attach-btn" aria-label="Add images or documents">' +
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-      '<path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.64 16.2a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
       '</svg>' +
-      '<span>Attach</span>' +
+      '<span>Add</span>' +
       '</button></div>' +
       '<div class="mira-pending-files" hidden></div>' +
       '<div class="mira-composer-row">' +

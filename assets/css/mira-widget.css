@@ -472,6 +472,33 @@
   color: #fecaca;
 }
 
+/* User attachment bubbles (separate from text turn) */
+.mira-msg-attach {
+  align-self: flex-end;
+  padding: 8px 10px;
+  max-width: min(94%, 280px);
+}
+
+.mira-attach-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+  background: rgba(6, 11, 20, 0.6);
+}
+
+.mira-attach-caption,
+.mira-attach-file-label {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #94a3b8;
+  word-break: break-all;
+}
+
 .mira-typing {
   font-size: 12px;
   color: #64748b;
