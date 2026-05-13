@@ -875,7 +875,20 @@
 
 <main class="wrap reveal" style="padding:48px 0 96px;">
 <h1>Changelog</h1>
-    <p style="font-family:var(--mono);font-size:13px;color:var(--text-3);margin:0 0 40px;">Last updated: May 12, 2026</p>
+    <p style="font-family:var(--mono);font-size:13px;color:var(--text-3);margin:0 0 40px;">Last updated: May 13, 2026</p>
+    <h2 style="font-size:22px;margin-bottom:16px;">v0.2.2 — May 13, 2026</h2>
+    <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
+      MIRA file chat: clearer analysis of screenshots and documents, safer handling of adversarial text inside images, and a cleaner attachment experience on the site.
+    </p>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">API and scanner</p>
+    <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 20px;">
+      <li>MIRA: vision and system guidance tuned so defensive review of screenshots and exports is in scope without wholesale refusals.</li>
+      <li>MIRA: multimodal hardening—text visible inside photos is handled like untrusted pasted content; no treating embedded “system”, “ignore”, or command-like strings in images as instructions you must follow (describe or flag injection bait; keep answers defensive).</li>
+    </ul>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Website</p>
+    <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 16px;">
+      <li>MIRA chat: add-style control for attachments; each file appears in its own message bubble (with image previews where applicable).</li>
+    </ul>
     <h2 style="font-size:22px;margin-bottom:16px;">v0.2.1 — May 12, 2026</h2>
     <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
       Hardening, billing tiers, reproducibility metadata, MIRA prompt clarity, and new marketing content. API and website roll out together when we publish a release.
