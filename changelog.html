@@ -884,6 +884,7 @@
     <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 20px;">
       <li>MIRA: vision and system guidance tuned so defensive review of screenshots and exports is in scope without wholesale refusals.</li>
       <li>MIRA: multimodal hardening—text visible inside photos is handled like untrusted pasted content; no treating embedded “system”, “ignore”, or command-like strings in images as instructions you must follow (describe or flag injection bait; keep answers defensive).</li>
+      <li>MIRA: attachment validation—raster images must be PNG/JPEG/GIF/WebP with magic bytes matching the declared type; PDFs must begin with a real <code>%PDF</code> header; assistant replies are capped for size; chat responses carry <code>Cache-Control: no-store</code> so shared caches do not retain POST bodies.</li>
     </ul>
     <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Website</p>
     <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 16px;">
