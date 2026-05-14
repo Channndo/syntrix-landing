@@ -365,7 +365,13 @@
     } else if (st === 400 || st === 422) {
       hint = '\n\nTip: MIRA is text-only; paste findings into the message box instead of uploading files.';
     } else if (st === 502 || st === 503 || st === 504) {
-      hint = '\n\nTip: if this persists, the model host may be busy — try again in a few minutes.';
+      var lm = (msg || '').toLowerCase();
+      if (lm.indexOf('not found') !== -1 && lm.indexOf('model') !== -1) {
+        hint =
+          '\n\nTip: on Render (or wherever the scanner runs), set OLLAMA_MODEL to the exact tag shown by `ollama list` on your Ollama machine (e.g. llama3.2:1b), then restart the service. Or pull the missing tag on the VPS.';
+      } else {
+        hint = '\n\nTip: if this persists, the model host may be busy — try again in a few minutes.';
+      }
     }
     return 'MIRA error (HTTP ' + (st || '—') + '):\n' + msg + hint;
   }
