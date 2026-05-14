@@ -896,8 +896,8 @@
     </div>
     <h2 style="margin-top:56px;">Mailing address</h2>
     <p style="color:var(--text-2);font-size:15px;line-height:1.75;margin:0;">OMNISTRATA, LLC<br/>
-    [PLACEHOLDER STREET ADDRESS]<br/>
-    Mishawaka, IN [PLACEHOLDER ZIP]<br/>
+    2039 E Ireland Rd<br/>
+    South Bend, IN 46614<br/>
     United States</p>
     <p style="font-size:13px;color:var(--text-3);margin-top:16px;">Physical mail goes unread for weeks. Email is faster.</p>
 </main>
@@ -1008,12 +1008,12 @@
         e.preventDefault();
         window.SyntrixAuth.logout();
       });
-    } catch (err) {}
+    } catch {}
     try {
       if (window.MiraChat && typeof window.MiraChat.init === 'function') {
         await window.MiraChat.init();
       }
-    } catch (e) {}
+    } catch {}
   })();
 </script>
 

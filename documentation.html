@@ -1022,12 +1022,12 @@
         e.preventDefault();
         window.SyntrixAuth.logout();
       });
-    } catch (err) {}
+    } catch {}
     try {
       if (window.MiraChat && typeof window.MiraChat.init === 'function') {
         await window.MiraChat.init();
       }
-    } catch (e) {}
+    } catch {}
   })();
 </script>
 

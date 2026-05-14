@@ -723,7 +723,7 @@
     overlay.querySelector('#mira-tour-yes').addEventListener('click', function () {
       try {
         localStorage.setItem(LS_TOUR, 'accepted');
-      } catch (e) {}
+      } catch {}
       overlay.remove();
       buildUI();
       injectTourMessage();
@@ -731,7 +731,7 @@
     overlay.querySelector('#mira-tour-no').addEventListener('click', function () {
       try {
         localStorage.setItem(LS_TOUR, 'dismissed');
-      } catch (e) {}
+      } catch {}
       overlay.remove();
     });
   }

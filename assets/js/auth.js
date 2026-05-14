@@ -107,7 +107,7 @@
   function markJustSignedIn() {
     try {
       sessionStorage.setItem('syntrix_just_signed_in', '1');
-    } catch (e) {}
+    } catch {}
   }
 
   function formatApiError(data) {
@@ -186,7 +186,7 @@
         sessionStorage.setItem('syntrix_pw_change_token', data.change_session_token);
         sessionStorage.setItem('syntrix_pw_change_reason', data.reason || '');
         sessionStorage.setItem('syntrix_pw_change_email', em);
-      } catch (e) {}
+      } catch {}
       window.location.href = `${window.location.origin}/change-password.html`;
       return data;
     }
@@ -230,7 +230,7 @@
             document.getElementById('pw-login-email').value) ||
           '';
         sessionStorage.setItem('syntrix_pw_change_email', String(raw).trim().toLowerCase());
-      } catch (e) {}
+      } catch {}
       window.location.href = `${window.location.origin}/change-password.html`;
       return data;
     }
@@ -253,7 +253,7 @@
     let changeTok = null;
     try {
       changeTok = sessionStorage.getItem('syntrix_pw_change_token');
-    } catch (e) {}
+    } catch {}
     const body = {
       current_password: currentPassword,
       new_password: newPassword,
@@ -282,7 +282,7 @@
       sessionStorage.removeItem('syntrix_pw_change_token');
       sessionStorage.removeItem('syntrix_pw_change_reason');
       sessionStorage.removeItem('syntrix_pw_change_email');
-    } catch (e) {}
+    } catch {}
     cachedProfile = null;
     return data;
   }

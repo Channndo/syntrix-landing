@@ -88,7 +88,7 @@
       var map = raw ? JSON.parse(raw) : {};
       map[em] = token;
       localStorage.setItem(DEVICE_TRUST_MAP_KEY, JSON.stringify(map));
-    } catch (e) {}
+    } catch {}
   }
 
   function clearDeviceTrustTokens() {
