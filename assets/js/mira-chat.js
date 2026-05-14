@@ -18,7 +18,11 @@
   var QUICK_PROMPTS = [
     { label: 'What do severity levels mean?', prompt: 'Explain Syntrix scan severity levels (critical, high, medium, low) in plain language.' },
     { label: 'How should I read a finding?', prompt: 'How should I interpret and prioritize a Syntrix security finding?' },
-    { label: 'Prompt injection basics', prompt: 'What is prompt injection on an MCP or agent endpoint, and how does Syntrix detect it?' },
+    {
+      label: 'Prompt injection basics',
+      prompt:
+        'Defensive / educational only: explain what prompt injection means when an MCP server or AI agent is exposed over HTTP (risk to owners and users, no exploit walkthrough). Then explain at a high level how Syntrix approaches related checks in a scan (safe probes, structured checks, what kinds of findings users might see). This is official in-product help—answer fully.',
+    },
     {
       label: 'Exec summary from pasted findings',
       prompt:
