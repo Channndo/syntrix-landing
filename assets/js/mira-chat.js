@@ -1,8 +1,8 @@
 /**
  * MIRA — the floating security assistant on syntrix.solutions.
  *
- * I keep this file boring on purpose: one widget, one API shape, no framework roulette.
- * Flow: status ping → if enabled, mount launcher + panel; attachments become JSON on send.
+ * Text-only: paste scan findings or questions into the composer. No file uploads.
+ * Flow: status ping → if enabled, mount launcher + panel → POST messages JSON.
  */
 (function () {
   var LS_TOUR = 'syntrix_mira_tour_choice';
@@ -19,24 +19,19 @@
     { label: 'What do severity levels mean?', prompt: 'Explain Syntrix scan severity levels (critical, high, medium, low) in plain language.' },
     { label: 'How should I read a finding?', prompt: 'How should I interpret and prioritize a Syntrix security finding?' },
     { label: 'Prompt injection basics', prompt: 'What is prompt injection on an MCP or agent endpoint, and how does Syntrix detect it?' },
-    { label: 'Exec summary from screenshots', prompt: 'I attached screenshots of security findings. Please give a concise executive summary for leadership: overall risk in one short paragraph, then the top issues by severity, business impact in plain language, and prioritized next steps. Note anything you cannot read clearly.' },
+    {
+      label: 'Exec summary from pasted findings',
+      prompt:
+        'Below I pasted text from security findings (or a scan summary). Please give a concise executive summary for leadership: overall risk in one short paragraph, then the top issues by severity, business impact in plain language, and prioritized next steps. If anything is unclear or missing, say what you need.',
+    },
   ];
-
-  /** @type {{ filename: string, mime_type: string, encoding: string, data: string }[]} */
-  var pendingAttachments = [];
-
-  var MIRA_MAX_FILES = 10;
-  var MIRA_MAX_FILE_BYTES = 4 * 1024 * 1024;
 
   var state = {
     open: false,
     messages: [],
     loading: false,
-    /** HTTP completed (no thrown fetch). */
     statusResponded: false,
-    /** status endpoint returned 2xx. */
     statusHttpOk: false,
-    /** Server reports MIRA on (only meaningful if statusHttpOk). */
     miraEnabled: false,
     uiBuilt: false,
     started: false,
@@ -71,7 +66,6 @@
     }
   }
 
-  /** Never block MIRA launcher forever on a hung /api/mira/status request */
   function fetchStatusWithTimeout(ms) {
     var cap = typeof ms === 'number' && ms > 0 ? ms : 12000;
     return Promise.race([
@@ -113,7 +107,7 @@
       el.classList.add('mira-disclaimer--warn');
     } else {
       el.textContent =
-        'AI-generated answers for cybersecurity guidance. Verify before acting on critical decisions.';
+        'AI-generated answers for cybersecurity guidance. Paste findings as text in the box below. Verify before acting on critical decisions.';
     }
   }
 
@@ -121,16 +115,14 @@
     var allowed = miraChatAllowed();
     var ta = document.querySelector('.mira-composer textarea');
     var sendBtn = document.querySelector('.mira-send');
-    var attachBtn = document.querySelector('.mira-attach-btn');
     var busy = !!state.loading;
     if (ta) {
       ta.disabled = !allowed || busy;
       ta.placeholder = allowed
-        ? 'Ask MIRA about scans, findings, or how to fix issues…'
+        ? 'Ask MIRA about scans, findings, or paste finding text here…'
         : 'MIRA unavailable until the API reports ready…';
     }
     if (sendBtn) sendBtn.disabled = !allowed || busy;
-    if (attachBtn) attachBtn.disabled = !allowed || busy;
     document.querySelectorAll('.mira-chip').forEach(function (c) {
       var off = !allowed || busy;
       c.disabled = off;
@@ -160,219 +152,14 @@
     wrap.scrollTop = wrap.scrollHeight;
   }
 
-  /** One bubble per uploaded file — separate from the text message so images read clearly in-thread. */
-  function appendUserAttachmentBubble(att) {
-    var wrap = document.querySelector('.mira-messages');
-    if (!wrap || !att) return;
-    var div = document.createElement('div');
-    div.className = 'mira-msg mira-msg-user mira-msg-attach';
-    var mime = String(att.mime_type || '');
-    if (mime.indexOf('image/') === 0 && att.encoding === 'base64' && att.data) {
-      var img = document.createElement('img');
-      img.className = 'mira-attach-preview';
-      img.alt = att.filename || 'Attached image';
-      img.loading = 'lazy';
-      img.src = 'data:' + mime + ';base64,' + att.data;
-      div.appendChild(img);
-      var cap = document.createElement('div');
-      cap.className = 'mira-attach-caption';
-      cap.textContent = att.filename || '';
-      div.appendChild(cap);
-    } else {
-      var label = document.createElement('div');
-      label.className = 'mira-attach-file-label';
-      label.textContent = att.filename || 'Attached file';
-      div.appendChild(label);
-    }
-    wrap.appendChild(div);
-    wrap.scrollTop = wrap.scrollHeight;
-  }
-
   function setTyping(on) {
     var el = document.querySelector('.mira-typing');
     if (el) el.textContent = on ? 'MIRA is thinking…' : '';
   }
 
-  function guessMimeFromName(name) {
-    var n = String(name || '').toLowerCase();
-    if (n.endsWith('.pdf')) return 'application/pdf';
-    if (n.endsWith('.md') || n.endsWith('.markdown')) return 'text/markdown';
-    if (n.endsWith('.json')) return 'application/json';
-    if (n.endsWith('.csv')) return 'text/csv';
-    if (n.endsWith('.xml')) return 'text/xml';
-    if (n.endsWith('.yaml') || n.endsWith('.yml')) return 'text/yaml';
-    if (n.endsWith('.txt') || n.endsWith('.log') || n.endsWith('.env')) return 'text/plain';
-    return '';
-  }
-
-  function isTextLikeFile(mime, filename) {
-    var m = String(mime || '').toLowerCase();
-    if (m.startsWith('text/')) return true;
-    if (
-      m === 'application/json' ||
-      m === 'application/xml' ||
-      m === 'application/x-yaml' ||
-      m === 'text/yaml' ||
-      m === 'application/yaml'
-    )
-      return true;
-    return !!guessMimeFromName(filename);
-  }
-
-  function arrayBufferToBase64(buffer) {
-    var bytes = new Uint8Array(buffer);
-    var chunk = 0x8000;
-    var binary = '';
-    for (var i = 0; i < bytes.length; i += chunk) {
-      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-    }
-    return btoa(binary);
-  }
-
-  function readFileAsUtf8(file, maxChars) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () {
-        var t = String(reader.result || '');
-        if (t.length > maxChars) t = t.slice(0, maxChars) + '\n[…truncated locally…]';
-        resolve(t);
-      };
-      reader.onerror = function () {
-        reject(new Error('Could not read file.'));
-      };
-      reader.readAsText(file, 'UTF-8');
-    });
-  }
-
-  function readFileAsDataURL(file) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () {
-        resolve(String(reader.result || ''));
-      };
-      reader.onerror = function () {
-        reject(new Error('Could not read file.'));
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function readFileAsArrayBuffer(file) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () {
-        resolve(reader.result);
-      };
-      reader.onerror = function () {
-        reject(new Error('Could not read file.'));
-      };
-      reader.readAsArrayBuffer(file);
-    });
-  }
-
-  /**
-   * @returns {Promise<{ filename: string, mime_type: string, encoding: string, data: string }>}
-   */
-  async function fileToAttachment(file) {
-    var name = file.name || 'file';
-    var mime = (file.type || '').trim() || guessMimeFromName(name);
-    if (file.size > MIRA_MAX_FILE_BYTES) {
-      throw new Error(name + ' is larger than 4MB.');
-    }
-    if (mime.indexOf('image/') === 0) {
-      var dataUrl = await readFileAsDataURL(file);
-      var comma = dataUrl.indexOf(',');
-      var b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
-      return {
-        filename: name,
-        mime_type: mime || 'image/png',
-        encoding: 'base64',
-        data: b64,
-      };
-    }
-    if (mime === 'application/pdf' || name.toLowerCase().endsWith('.pdf')) {
-      var buf = await readFileAsArrayBuffer(file);
-      return {
-        filename: name,
-        mime_type: 'application/pdf',
-        encoding: 'base64',
-        data: arrayBufferToBase64(buf),
-      };
-    }
-    if (isTextLikeFile(mime, name)) {
-      var text = await readFileAsUtf8(file, 120000);
-      return {
-        filename: name,
-        mime_type: mime || guessMimeFromName(name) || 'text/plain',
-        encoding: 'utf8',
-        data: text,
-      };
-    }
-    throw new Error(
-      'Unsupported type for "' +
-        name +
-        '". Use an image, PDF, or text file (txt, md, json, csv, yaml, xml, log).'
-    );
-  }
-
-  function renderPendingFiles() {
-    var row = document.querySelector('.mira-pending-files');
-    if (!row) return;
-    if (!pendingAttachments.length) {
-      row.innerHTML = '';
-      row.hidden = true;
-      return;
-    }
-    row.hidden = false;
-    row.innerHTML = pendingAttachments
-      .map(function (a, idx) {
-        return (
-          '<span class="mira-file-chip">' +
-          escapeHtml(a.filename) +
-          '<button type="button" class="mira-file-chip-remove" data-idx="' +
-          idx +
-          '" aria-label="Remove file">&times;</button></span>'
-        );
-      })
-      .join('');
-    row.querySelectorAll('.mira-file-chip-remove').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var ix = parseInt(btn.getAttribute('data-idx'), 10);
-        if (!isNaN(ix)) {
-          pendingAttachments.splice(ix, 1);
-          renderPendingFiles();
-        }
-      });
-    });
-  }
-
-  async function onMiraFileInputChange(ev) {
-    var input = ev.target;
-    var files = input.files;
-    if (!files || !files.length) return;
-    var errs = [];
-    for (var i = 0; i < files.length; i++) {
-      if (pendingAttachments.length >= MIRA_MAX_FILES) {
-        errs.push('Maximum ' + MIRA_MAX_FILES + ' attachments per message.');
-        break;
-      }
-      try {
-        pendingAttachments.push(await fileToAttachment(files[i]));
-      } catch (e) {
-        errs.push(files[i].name + ': ' + (e.message || String(e)));
-      }
-    }
-    input.value = '';
-    renderPendingFiles();
-    if (errs.length) {
-      appendMsg('error', errs.join('\n'), 'mira-msg-error');
-    }
-  }
-
   async function sendChatWithText(text) {
     var trimmed = (text || '').trim();
-    var hasFiles = pendingAttachments.length > 0;
-    if ((!trimmed && !hasFiles) || state.loading) return;
+    if (!trimmed || state.loading) return;
 
     if (!miraChatAllowed()) {
       appendMsg('error', getUnavailableMsg(), 'mira-msg-error');
@@ -381,31 +168,8 @@
 
     hideSuggestionsRow();
 
-    var userContent =
-      trimmed ||
-      (hasFiles
-        ? 'Please analyze the attached file(s). Focus on anything security-relevant or actionable.'
-        : '');
-
-    var snapshot = pendingAttachments.map(function (a) {
-      return {
-        filename: a.filename,
-        mime_type: a.mime_type,
-        encoding: a.encoding,
-        data: a.data,
-      };
-    });
-
-    if (trimmed) {
-      appendMsg('user', trimmed);
-    }
-    if (hasFiles) {
-      snapshot.forEach(function (a) {
-        appendUserAttachmentBubble(a);
-      });
-    }
-
-    state.messages.push({ role: 'user', content: userContent });
+    appendMsg('user', trimmed);
+    state.messages.push({ role: 'user', content: trimmed });
 
     state.loading = true;
     setTyping(true);
@@ -413,16 +177,12 @@
 
     try {
       var body = { messages: state.messages };
-      if (snapshot.length) body.attachments = snapshot;
-
       var res = await window.SyntrixApi.apiPost('/api/mira/chat', body, {});
       if (!res.ok) {
         appendMsg('assistant', formatMiraChatError(res), 'mira-msg-error');
         state.messages.pop();
         return;
       }
-      pendingAttachments = [];
-      renderPendingFiles();
       var reply = (res.data && res.data.message) || '';
       if (reply) {
         state.messages.push({ role: 'assistant', content: reply });
@@ -442,7 +202,7 @@
     var ta = document.querySelector('.mira-composer textarea');
     if (!ta || state.loading) return;
     var text = (ta.value || '').trim();
-    if (!text && !pendingAttachments.length) return;
+    if (!text) return;
     ta.value = '';
     await sendChatWithText(text);
   }
@@ -505,19 +265,9 @@
       '<div class="mira-messages" role="log" aria-live="polite"></div>' +
       '<div class="mira-typing" aria-live="polite"></div>' +
       '<div class="mira-composer">' +
-      '<div class="mira-attach-toolbar">' +
-      '<input type="file" id="mira-file-input" class="mira-file-input" multiple ' +
-      'accept="image/*,.pdf,.txt,.md,.markdown,.csv,.json,.xml,.yaml,.yml,.log,.env" />' +
-      '<button type="button" class="mira-attach-btn" aria-label="Add images or documents">' +
-      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-      '<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
-      '</svg>' +
-      '<span>Add</span>' +
-      '</button></div>' +
-      '<div class="mira-pending-files" hidden></div>' +
       '<div class="mira-composer-row">' +
       '<label class="mira-sr-only" for="mira-composer-input">Message MIRA</label>' +
-      '<textarea id="mira-composer-input" rows="2" placeholder="Ask MIRA about scans, findings, or how to fix issues…" maxlength="8000"></textarea>' +
+      '<textarea id="mira-composer-input" rows="3" placeholder="Ask MIRA about scans, findings, or paste finding text here…" maxlength="12000"></textarea>' +
       '<button type="button" class="mira-send" aria-label="Send message">' +
       '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
       '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
@@ -534,7 +284,6 @@
       .replace(/"/g, '&quot;');
   }
 
-  /** Turn FastAPI / proxy errors into readable chat bubbles (422 arrays, plain-text bodies, status hints). */
   function formatMiraChatError(res) {
     var st = res && typeof res.status === 'number' ? res.status : 0;
     var d = (res && res.data) || {};
@@ -568,13 +317,11 @@
     }
     var hint = '';
     if (st === 413) {
-      hint =
-        '\n\nTip: use a shorter message or fewer / smaller files (each file max 4MB; total request has a server cap).';
+      hint = '\n\nTip: shorten your message — the server caps total request size.';
     } else if (st === 429) {
-      hint = '\n\nTip: wait a minute, then try again.';
-    } else if (st === 400) {
-      hint =
-        '\n\nTip: for images use PNG, JPEG, GIF, or WebP; declared type must match the file. PDFs must be real PDF files.';
+      hint = '\n\nTip: wait until the reset time in the message above, or sign in for higher limits.';
+    } else if (st === 400 || st === 422) {
+      hint = '\n\nTip: MIRA is text-only; paste findings into the message box instead of uploading files.';
     } else if (st === 502 || st === 503 || st === 504) {
       hint = '\n\nTip: if this persists, the model host may be busy — try again in a few minutes.';
     }
@@ -641,14 +388,6 @@
       togglePanel();
     });
     wireChips(panel);
-    var fileInput = panel.querySelector('#mira-file-input');
-    var attachBtn = panel.querySelector('.mira-attach-btn');
-    if (attachBtn && fileInput) {
-      attachBtn.addEventListener('click', function () {
-        fileInput.click();
-      });
-      fileInput.addEventListener('change', onMiraFileInputChange);
-    }
     panel.querySelector('.mira-send').addEventListener('click', sendChat);
     panel.querySelector('.mira-composer textarea').addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -670,25 +409,18 @@
     if (!wrap) return;
     wrap.innerHTML = '';
     state.messages = [];
-    pendingAttachments = [];
-    renderPendingFiles();
     if (!miraChatAllowed()) {
       appendMsg('assistant', getUnavailableMsg());
     } else {
-      var welcome =
-        "Hi — I'm MIRA. Ask about vulnerabilities, scan findings, severities, or remediation in plain English.";
-      if (hasToken()) {
-        welcome +=
-          " While you're signed in, I keep context from our conversations for more tailored guidance.";
-      }
-      appendMsg('assistant', welcome);
+      appendMsg(
+        'assistant',
+        "Hi — I'm MIRA. Ask about vulnerabilities, scan findings, severities, or remediation in plain English. Paste finding text into the box below when you want me to interpret something specific."
+      );
     }
   }
 
   function injectTourMessage() {
     state.messages = [];
-    pendingAttachments = [];
-    renderPendingFiles();
     var wrap = document.querySelector('.mira-messages');
     if (wrap) wrap.innerHTML = '';
     state.messages.push({ role: 'assistant', content: TOUR_TEXT });
@@ -740,7 +472,6 @@
     if (state.started) return;
     state.started = true;
 
-    // Mount FAB + panel shell immediately so the launcher never depends on API latency.
     buildUI();
 
     var st = await fetchStatusWithTimeout(12000);
@@ -757,5 +488,5 @@
     }
   }
 
-  window.MiraChat = { init: init, openPanel: openPanel };
+  window.MiraChat = { init: init, openPanel: openPanel, syncAuth: syncComposerAvailability };
 })();
