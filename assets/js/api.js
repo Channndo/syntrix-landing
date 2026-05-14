@@ -117,9 +117,17 @@
       init.body = JSON.stringify(body);
     }
     var r = await fetch(url, init);
-    var data = await r.json().catch(function () {
-      return {};
-    });
+    var text = await r.text();
+    var data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        if (!r.ok) {
+          data = { detail: text.trim().slice(0, 2000) || 'Request failed.' };
+        }
+      }
+    }
     return { ok: r.ok, status: r.status, data: data };
   }
 

@@ -889,6 +889,8 @@
     <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Website</p>
     <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 16px;">
       <li>MIRA chat: add-style control for attachments; each file appears in its own message bubble (with image previews where applicable).</li>
+      <li>MIRA: clearer in-panel error text for API failures (including validation, rate limits, and oversized requests) plus short tips where it helps.</li>
+      <li><code>api.js</code>: POST responses are read as text first so non-JSON error bodies (e.g. proxy pages) can still surface a useful message.</li>
     </ul>
     <h2 style="font-size:22px;margin-bottom:16px;">v0.2.1 — May 12, 2026</h2>
     <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
@@ -1008,8 +1010,8 @@
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/session-idle.js"></script>
 <script src="assets/js/billing.js"></script>
-<script src="assets/js/mira-chat.js?v=mira19"></script>
-<script src="assets/js/mira-boot.js?v=mira19"></script>
+<script src="assets/js/mira-chat.js?v=mira20"></script>
+<script src="assets/js/mira-boot.js?v=mira20"></script>
 
 <script>
   (async function () {

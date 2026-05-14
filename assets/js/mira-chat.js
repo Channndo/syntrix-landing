@@ -417,13 +417,7 @@
 
       var res = await window.SyntrixApi.apiPost('/api/mira/chat', body, {});
       if (!res.ok) {
-        var detail =
-          res.data && res.data.detail
-            ? typeof res.data.detail === 'string'
-              ? res.data.detail
-              : JSON.stringify(res.data.detail)
-            : 'Could not reach MIRA.';
-        appendMsg('assistant', detail, 'mira-msg-error');
+        appendMsg('assistant', formatMiraChatError(res), 'mira-msg-error');
         state.messages.pop();
         return;
       }
@@ -538,6 +532,53 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  /** Turn FastAPI / proxy errors into readable chat bubbles (422 arrays, plain-text bodies, status hints). */
+  function formatMiraChatError(res) {
+    var st = res && typeof res.status === 'number' ? res.status : 0;
+    var d = (res && res.data) || {};
+    var msg = '';
+    if (typeof d.detail === 'string' && d.detail.trim()) {
+      msg = d.detail.trim();
+    } else if (Array.isArray(d.detail)) {
+      msg = d.detail
+        .map(function (x) {
+          if (typeof x === 'string') return x;
+          if (x && typeof x.msg === 'string') return x.msg;
+          if (x && Array.isArray(x.loc) && typeof x.msg === 'string') return x.loc.join('.') + ': ' + x.msg;
+          try {
+            return JSON.stringify(x);
+          } catch (e) {
+            return String(x);
+          }
+        })
+        .filter(Boolean)
+        .join('\n');
+    } else if (d && typeof d.message === 'string' && d.message.trim()) {
+      msg = d.message.trim();
+    }
+    if (!msg) {
+      if (st === 413) msg = 'Request too large for MIRA.';
+      else if (st === 429) msg = 'Too many requests — please slow down.';
+      else if (st === 502 || st === 503) msg = 'MIRA backend is temporarily unavailable.';
+      else if (st === 504) msg = 'MIRA timed out waiting for the model.';
+      else if (st >= 400) msg = 'Request could not be completed.';
+      else msg = 'Could not reach MIRA.';
+    }
+    var hint = '';
+    if (st === 413) {
+      hint =
+        '\n\nTip: use a shorter message or fewer / smaller files (each file max 4MB; total request has a server cap).';
+    } else if (st === 429) {
+      hint = '\n\nTip: wait a minute, then try again.';
+    } else if (st === 400) {
+      hint =
+        '\n\nTip: for images use PNG, JPEG, GIF, or WebP; declared type must match the file. PDFs must be real PDF files.';
+    } else if (st === 502 || st === 503 || st === 504) {
+      hint = '\n\nTip: if this persists, the model host may be busy — try again in a few minutes.';
+    }
+    return 'MIRA error (HTTP ' + (st || '—') + '):\n' + msg + hint;
   }
 
   function wireChips(panel) {
