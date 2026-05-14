@@ -875,7 +875,25 @@
 
 <main class="wrap reveal" style="padding:48px 0 96px;">
 <h1>Changelog</h1>
-    <p style="font-family:var(--mono);font-size:13px;color:var(--text-3);margin:0 0 40px;">Last updated: May 13, 2026</p>
+    <p style="font-family:var(--mono);font-size:13px;color:var(--text-3);margin:0 0 40px;">Last updated: May 14, 2026</p>
+    <h2 style="font-size:22px;margin-bottom:16px;">v0.2.3 — May 14, 2026</h2>
+    <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
+      MIRA is <strong>text-only</strong> on the site: paste scan text or questions in the composer. The API rejects file uploads, answers are steadier on severity follow-ups, anonymous chat gets a daily cap, and prompts are aligned so built-in “Try asking” chips get full defensive answers.
+    </p>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">API and scanner</p>
+    <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 20px;">
+      <li>MIRA chat: <strong>attachments removed</strong> from <code>POST /api/mira/chat</code>; non-empty <code>attachments</code> in JSON returns validation error with guidance to paste text instead. Chat path is text-only end to end; <code>pypdf</code> dropped from dependencies.</li>
+      <li>MIRA: <strong>anonymous per-IP UTC daily limit</strong> for chat (configurable via <code>SYNTRIX_MIRA_ANONYMOUS_MAX_PER_UTC_DAY</code>; <code>0</code> disables the cap). Signed-in users are not counted against this bucket.</li>
+      <li>MIRA system prompt: <strong>canonical Syntrix severities</strong> (critical, high, medium, low, info)—not a numeric “severity 3” product scale—plus guidance for very short follow-ups (for example “2?”) so they are read as severity or list continuations.</li>
+      <li>MIRA: <strong>false refusal guard</strong>—if the model emits certain unrelated extreme-safety phrases after an obviously benign last user turn in a scan/severity thread, the API replaces that reply with corrective copy and emits a scrub telemetry event (no prompt logging).</li>
+      <li>MIRA: <strong>curated UI quick prompts</strong> are called out in the system prompt as sanctioned in-product help; “how does Syntrix detect …” stays in scope as high-level defensive methodology. Generic brush-off refusals on those topics are explicitly out of policy.</li>
+    </ul>
+    <p style="color:var(--text);font-size:14px;font-weight:600;margin:0 0 8px;max-width:720px;">Website</p>
+    <ul style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;padding-left:1.2em;margin:0 0 16px;">
+      <li>MIRA widget: <strong>no attach / file UI</strong>—composer, send, and “Try asking” chips only; disclaimer and placeholders tell users to paste findings.</li>
+      <li>MIRA: <strong>Prompt injection</strong> quick chip reworded for defensive, educational framing so models answer reliably; error hints for validation failures remind users that chat is text-only.</li>
+      <li>Styles: removed attachment toolbar, pending-file chips, and attachment message bubble CSS tied to the old flow.</li>
+    </ul>
     <h2 style="font-size:22px;margin-bottom:16px;">v0.2.2 — May 13, 2026</h2>
     <p style="color:var(--text-2);font-size:15px;line-height:1.75;max-width:720px;margin:0 0 16px;">
       MIRA file chat: clearer analysis of screenshots and documents, safer handling of adversarial text inside images, and a cleaner attachment experience on the site.
