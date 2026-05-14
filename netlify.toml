@@ -11,7 +11,7 @@
 # or use the site’s linked Git workflow only.
 #
 # Same-origin API proxy (netlify dev + production): browser hits /scanner-api/* here; Netlify forwards to the scanner.
-# api.js uses this on localhost, syntrix.solutions, www, and *.netlify.app so MIRA + scans work without browser CORS to the API host.
+# api.js: same-origin /scanner-api on localhost and *.netlify.app; production syntrix.solutions calls the API host directly (avoids Netlify proxy timeouts on long MIRA chats).
 [[redirects]]
   from = "/scanner-api/*"
   to = "https://api.syntrix.solutions/:splat"

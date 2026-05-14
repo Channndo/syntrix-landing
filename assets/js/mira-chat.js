@@ -86,17 +86,55 @@
     return state.statusResponded && state.statusHttpOk && state.miraEnabled;
   }
 
+  function _miraPublicHostname() {
+    try {
+      return (window.location.hostname || '').toLowerCase();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function _miraIsProductionMarketingHost() {
+    var h = _miraPublicHostname();
+    return h === 'syntrix.solutions' || h === 'www.syntrix.solutions';
+  }
+
   function getUnavailableMsg() {
-    if (!state.statusResponded) {
+    if (!window.SyntrixApi || typeof window.SyntrixApi.apiBase !== 'function') {
       return (
-        'Cannot reach the scanner API. Deploy the latest `landing/` to Netlify so /scanner-api proxies to the scanner, then hard-refresh. For local dev run `netlify dev` from the landing folder. ' +
-        'You can disable the proxy with SYNTRIX_DISABLE_LOCAL_API_PROXY in config.js if the API allows this origin in CORS.'
+        'MIRA could not start: assets/js/api.js did not load before MIRA. Check that api.js runs before mira-chat.js on this page.'
+      );
+    }
+    var base = apiBase();
+    if (!base) {
+      return 'MIRA could not start: API base URL is empty. Set window.SYNTRIX_API_BASE or fix assets/js/api.js.';
+    }
+    if (!state.statusResponded) {
+      if (_miraIsProductionMarketingHost()) {
+        return (
+          'Cannot reach the scanner API at ' +
+          base +
+          ' (browser never got a response for GET /api/mira/status). This is a network or API availability issue—not your Ollama model tag. ' +
+          'Check DevTools → Network for failures, try https://api.syntrix.solutions/api/mira/status in a new tab, disable VPN/ad blockers briefly, then hard-refresh.'
+        );
+      }
+      return (
+        'Cannot reach the scanner API via ' +
+        base +
+        '. For local dev run `netlify dev` from the landing folder so /scanner-api proxies to the API, then hard-refresh. ' +
+        'You can set window.SYNTRIX_DISABLE_LOCAL_API_PROXY = true in assets/js/config.js to call the API host directly if CORS allows this origin.'
       );
     }
     if (!state.statusHttpOk) {
+      if (_miraIsProductionMarketingHost()) {
+        return (
+          'The API returned an error for MIRA status (GET /api/mira/status). Confirm the scanner is deployed with that route, ' +
+          'SYNTRIX_MIRA_ENABLED is true, and check api.syntrix.solutions logs or uptime.'
+        );
+      }
       return (
-        'The API did not return MIRA status. Deploy an updated scanner so GET /api/mira/status exists on api.syntrix.solutions ' +
-        'and set SYNTRIX_MIRA_ENABLED. The landing site proxies /scanner-api to that API (see netlify.toml).'
+        'The API did not return MIRA status. Deploy an updated scanner so GET /api/mira/status exists and set SYNTRIX_MIRA_ENABLED. ' +
+        'For local dev, use netlify dev so /scanner-api proxies to the API (see netlify.toml).'
       );
     }
     return 'MIRA is disabled on this API (SYNTRIX_MIRA_ENABLED).';
