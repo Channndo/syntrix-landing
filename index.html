@@ -1282,10 +1282,6 @@
       }
     }).catch(function () {});
 
-    if (guestWrap && guestScansEnabled()) {
-      guestWrap.style.display = '';
-    }
-
     btn.addEventListener('click', submitScan);
     elTarget.addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); submitScan(); }
@@ -1293,7 +1289,21 @@
 
     async function submitScan() {
       const guestCb = document.getElementById('scan-as-guest');
-      const guestMode = !!(guestCb && guestCb.checked && guestScansEnabled());
+      let guestMode = !!(guestCb && guestCb.checked && guestScansEnabled());
+
+      // Signed-in users use /api/scans with their subscription; guest limits apply only when anonymous.
+      if (
+        guestMode &&
+        window.SyntrixAuth &&
+        typeof window.SyntrixAuth.isAuthenticated === 'function'
+      ) {
+        try {
+          if (await window.SyntrixAuth.isAuthenticated()) {
+            guestMode = false;
+            if (guestCb) guestCb.checked = false;
+          }
+        } catch (e) { /* ignore */ }
+      }
 
       if (!guestMode) {
         if (!window.SyntrixAuth.isConfigured()) {
@@ -1369,7 +1379,9 @@
         clearTimeout(coldTimer);
 
         if (r.status === 429) {
-          let detail = 'Daily guest scan limit reached.';
+          let detail = guestMode
+            ? 'Daily guest scan limit reached.'
+            : 'Too many requests. Please wait a moment and try again.';
           try {
             const errBody = await r.json();
             if (typeof errBody.detail === 'string') detail = errBody.detail;
@@ -1593,6 +1605,12 @@
         if (banner) banner.style.display = configured ? 'none' : 'block';
 
         const authed = await window.SyntrixAuth.isAuthenticated();
+        if (guestWrap && guestScansEnabled()) {
+          guestWrap.style.display = authed ? 'none' : '';
+        }
+        const guestScanCb = document.getElementById('scan-as-guest');
+        if (authed && guestScanCb) guestScanCb.checked = false;
+
         const login = document.getElementById('nav-login');
         const signup = document.getElementById('nav-signup');
         const account = document.getElementById('nav-account');
@@ -1655,6 +1673,9 @@
         });
       } catch (err) {
         console.warn('Auth init skipped:', err);
+        if (guestWrap && guestScansEnabled()) {
+          guestWrap.style.display = '';
+        }
       }
     }
 
